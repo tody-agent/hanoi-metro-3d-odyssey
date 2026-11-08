@@ -1,0 +1,22 @@
+new_ward_code,new_ward_name,urban_ring_sector,historical_submarket,sample_n,mean_price_m2,mean_metro_dist_km
+HN_W01,Phường Giảng Võ (TP. Hà Nội),UZ1_Core_Ring1_2,Ba Đình,115,101.03,0.88
+HN_W02,Phường Ngọc Hà (TP. Hà Nội),UZ1_Core_Ring1_2,Ba Đình,135,94.55,1.842
+HN_W03,Phường Ba Đình (TP. Hà Nội),UZ1_Core_Ring1_2,Ba Đình,170,96.72,1.229
+HN_W04,Phường Láng (TP. Hà Nội),UZ1_Core_Ring1_2,Đống Đa,196,90.81,1.443
+HN_W05,Phường Ô Chợ Dừa (TP. Hà Nội),UZ1_Core_Ring1_2,Đống Đa,300,92.72,0.861
+HN_W06,Phường Đống Đa (TP. Hà Nội),UZ1_Core_Ring1_2,Đống Đa,412,91.87,0.912
+HN_W07,Phường Cầu Giấy (TP. Hà Nội),UZ2_Inner_Ring2_3,Cầu Giấy,971,85.04,0.846
+HN_W08,Phường Yên Hòa (TP. Hà Nội),UZ2_Inner_Ring2_3,Cầu Giấy,792,83.34,1.685
+HN_W09,Phường Nghĩa Đô (TP. Hà Nội),UZ2_Inner_Ring2_3,Cầu Giấy,1132,83.86,1.076
+HN_W10,Phường Thanh Xuân (TP. Hà Nội),UZ2_Inner_Ring2_3,Thanh Xuân,1055,84.67,0.717
+HN_W11,Phường Nhân Chính (TP. Hà Nội),UZ2_Inner_Ring2_3,Thanh Xuân,346,82.09,1.15
+HN_W12,Phường Khương Đình (TP. Hà Nội),UZ2_Inner_Ring2_3,Thanh Xuân,954,83.69,1.461
+HN_W13,Phường Phú Diễn (TP. Hà Nội),UZ3_West_Corridor_Ring3_35,Bắc Từ Liêm,835,81.7,0.745
+HN_W14,Phường Xuân Đỉnh (TP. Hà Nội),UZ2_Inner_Ring2_3,Bắc Từ Liêm,461,79.3,3.594
+HN_W15,Phường Đông Ngạc (TP. Hà Nội),UZ3_West_Corridor_Ring3_35,Bắc Từ Liêm,347,80.67,5.089
+HN_W16,Phường Từ Liêm (TP. Hà Nội),UZ3_West_Corridor_Ring3_35,Nam Từ Liêm,1760,80.4,1.011
+HN_W17,Phường Tây Mỗ (TP. Hà Nội),UZ3_West_Corridor_Ring3_35,Nam Từ Liêm,1001,79.22,5.694
+HN_W18,Phường Mễ Trì (TP. Hà Nội),UZ3_West_Corridor_Ring3_35,Nam Từ Liêm,2128,80.1,1.975
+HN_W19,Phường Hà Đông (TP. Hà Nội),UZ4_Southwest_TOD_Ring35_4,Hà Đông,1197,60.28,0.686
+HN_W20,Phường Dương Nội (TP. Hà Nội),UZ4_Southwest_TOD_Ring35_4,Hà Đông,506,58.87,1.514
+HN_W21,Phường Kiến Hưng (TP. Hà Nội),UZ4_Southwest_TOD_Ring35_4,Hà Đông,1658,60.33,0.874

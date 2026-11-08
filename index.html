@@ -1,0 +1,2799 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Hanoi Metro 3D Odyssey — Mô Hình Hedonic Đa Tầng &amp; GIS (N = 16.471)</title>
+  <meta name="description" content="Hệ thống trực quan hóa dữ liệu không gian 3D (Spatial Data Science) và kiểm định kinh tế lượng Hedonic 3 tầng không gian (Vành đai Đô thị • 21 Phường mới Chính quyền 2 cấp • 7 Tiểu thị trường lịch sử, N = 16.471 căn hộ) dọc hành lang Tuyến Metro 2A &amp; Tuyến 3 Hà Nội." />
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --bg-deep: #040914;
+      --slate-900: rgba(10, 18, 34, 0.92);
+      --slate-800: rgba(30, 41, 59, 0.88);
+      --border-glass: rgba(148, 163, 184, 0.26);
+      --emerald: #10b981;
+      --emerald-light: #34d399;
+      --blue: #3b82f6;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg-deep);
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    #canvas3d {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+      touch-action: none;
+      z-index: 1;
+    }
+    #canvas3d:active {
+      cursor: grabbing;
+    }
+
+    /* Top Minimal Floating Navigation */
+    .hud-top {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      pointer-events: none;
+      flex-wrap: wrap;
+    }
+    .pill-group {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--slate-900);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-glass);
+      border-radius: 9999px;
+      padding: 4px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+      max-width: 100%;
+    }
+
+    .nav-btn {
+      border: none;
+      background: transparent;
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 13px;
+      border-radius: 9999px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav-btn:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .nav-btn.active {
+      background: var(--emerald);
+      color: #022c22;
+      font-weight: 700;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .action-group {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+    }
+    .icon-pill {
+      border: 1px solid var(--border-glass);
+      background: var(--slate-900);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: #f1f5f9;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 12px;
+      border-radius: 9999px;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      transition: all 0.2s ease;
+    }
+    .icon-pill:hover {
+      border-color: var(--emerald-light);
+    }
+    .icon-pill.active-mode {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: var(--emerald-light);
+      color: var(--emerald-light);
+    }
+
+    /* Bottom Compact Dock — Automatically hides whenever Data Sheet opens to prevent any overlap */
+    .hud-bottom {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      width: calc(100% - 24px);
+      max-width: 580px;
+      pointer-events: auto;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .hud-bottom.hidden-bar {
+      display: none !important;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .prompt-card {
+      background: var(--slate-900);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-glass);
+      border-radius: 18px;
+      padding: 10px 14px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+    }
+    .prompt-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .prompt-info {
+      min-width: 0;
+      flex: 1;
+    }
+    .prompt-tag {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--emerald-light);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .prompt-sub {
+      font-size: 12px;
+      color: #cbd5e1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .cta-btn {
+      border: none;
+      background: var(--emerald);
+      color: #022c22;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 8px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .cta-btn:hover {
+      background: var(--emerald-light);
+    }
+
+    /* Interactive Cự Ly Controls inside Bottom Bar (No line wrapping!) */
+    .exp-controls {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(148, 163, 184, 0.18);
+      display: none;
+    }
+    .exp-controls.active {
+      display: block;
+    }
+    .slider-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      margin-bottom: 5px;
+      white-space: nowrap;
+    }
+    .preset-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .preset-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .preset-chip {
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      background: rgba(30, 41, 59, 0.85);
+      color: #e2e8f0;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 8px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: all 0.18s ease;
+    }
+    .preset-chip.active-chip {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: #34d399;
+      color: #6ee7b7;
+      font-weight: 700;
+    }
+
+    /* On-Demand Data Science Drawer (Clean, Wide enough for Academic Tables, Never overlaps HUD) */
+    .info-sheet {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      z-index: 30;
+      width: 500px;
+      max-width: calc(100vw - 24px);
+      max-height: calc(100vh - 76px);
+      background: rgba(8, 15, 28, 0.97);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid rgba(148, 163, 184, 0.30);
+      border-radius: 20px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.80);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease;
+    }
+    .info-sheet.closed {
+      transform: translateY(110%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @media (max-width: 640px) {
+      .pill-group {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .nav-btn {
+        padding: 6px 8px;
+        flex: 1;
+        justify-content: center;
+      }
+      .hide-sm { display: none; }
+      .info-sheet {
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        width: auto;
+        max-width: none;
+        max-height: 78vh;
+      }
+    }
+
+    .sheet-header {
+      padding: 11px 15px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .sheet-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.18);
+      color: var(--emerald-light);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .close-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 9999px;
+      border: none;
+      background: rgba(30, 41, 59, 0.9);
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .close-btn:hover {
+      background: rgba(51, 65, 85, 1);
+      color: #ffffff;
+    }
+    .sheet-body {
+      padding: 12px 15px 16px;
+      overflow-y: auto;
+      user-select: text;
+    }
+    .sheet-body::-webkit-scrollbar { width: 5px; }
+    .sheet-body::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 9999px; }
+
+    /* Sub-tabs inside the Data Science Panel */
+    .ds-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      background: rgba(15, 23, 42, 0.9);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      margin-bottom: 10px;
+    }
+    .ds-tab {
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 4px;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .ds-tab.active {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      font-weight: 700;
+    }
+
+    /* Data Science Tables (Zero horizontal scrollbar, clean academic alignment) */
+    .ds-table-wrap {
+      width: 100%;
+      overflow-x: hidden;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(15, 23, 42, 0.65);
+      margin-top: 6px;
+    }
+    .ds-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+      table-layout: auto;
+    }
+    .ds-table th {
+      background: rgba(30, 41, 59, 0.85);
+      color: #cbd5e1;
+      font-weight: 700;
+      padding: 6px 7px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+      line-height: 1.25;
+    }
+    .ds-table td {
+      padding: 5px 7px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      color: #e2e8f0;
+      line-height: 1.3;
+      vertical-align: middle;
+    }
+    .ds-table tr:last-child td {
+      border-bottom: none;
+    }
+    .ds-table tr.highlight-row td {
+      background: rgba(16, 185, 129, 0.14);
+      color: #6ee7b7;
+      font-weight: 700;
+    }
+    .se-sub {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      color: #94a3b8;
+    }
+    .ds-table tr.highlight-row .se-sub {
+      color: #a7f3d0;
+    }
+
+    /* Metric Grid (6-Card / 2-Card) */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .metric-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .metric-box {
+      padding: 8px 9px;
+      border-radius: 12px;
+      background: rgba(30, 41, 59, 0.65);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      min-width: 0;
+    }
+    .metric-label {
+      font-size: 12px;
+      color: #94a3b8;
+      white-space: nowrap;
+    }
+    .metric-val {
+      font-size: 14px;
+      font-weight: 800;
+      margin-top: 2px;
+      white-space: nowrap;
+    }
+
+    .insight-box {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.85);
+      border-left: 3px solid var(--emerald);
+      border-top: 1px solid rgba(148, 163, 184, 0.18);
+      border-right: 1px solid rgba(148, 163, 184, 0.18);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+      margin-top: 10px;
+      font-size: 12px;
+      color: #e2e8f0;
+      line-height: 1.5;
+    }
+
+    .bar-row {
+      margin-top: 8px;
+    }
+    .bar-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      margin-bottom: 3px;
+      white-space: nowrap;
+    }
+    .bar-track {
+      width: 100%;
+      height: 7px;
+      background: rgba(30, 41, 59, 0.9);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 9999px;
+    }
+    .chip-btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 9px 12px;
+      border-radius: 11px;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.16);
+      color: #6ee7b7;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .calc-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .calc-select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .calc-range {
+      width: 100%;
+      accent-color: var(--emerald);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- FULLSCREEN 3D MAP CANVAS -->
+  <canvas id="canvas3d"></canvas>
+
+  <!-- TOP MINIMAL NAVIGATION (4 STEPS FIT PERFECTLY ON BOTH MOBILE & DESKTOP) -->
+  <header class="hud-top">
+    <nav class="pill-group" aria-label="Các bước phân tích">
+      <button onclick="setStep(1)" id="step-1" class="nav-btn active">
+        <span>1. Không Gian</span><span class="hide-sm">3D</span>
+      </button>
+      <button onclick="setStep(2)" id="step-2" class="nav-btn">
+        <span>2. Mô Phỏng</span><span class="hide-sm">Cự Ly</span>
+      </button>
+      <button onclick="setStep(3)" id="step-3" class="nav-btn">
+        <span>3. Mô Hình</span><span class="hide-sm">OLS</span>
+      </button>
+      <button onclick="setStep(4)" id="step-4" class="nav-btn">
+        <span>4. Định Giá</span>
+      </button>
+    </nav>
+
+    <div class="action-group">
+      <button onclick="toggleMapTheme()" id="btn-theme" class="icon-pill" title="Đổi nền bản đồ OpenStreetMap / Google Earth">
+        <span id="theme-icon">🗺️</span>
+        <span id="theme-label">Nền OSM</span>
+      </button>
+      <button onclick="toggleTrainCam()" id="btn-train" class="icon-pill" title="Góc nhìn đi theo đoàn tàu Metro">
+        <span>🚝</span>
+        <span class="hide-sm" id="train-label">Theo Tàu</span>
+      </button>
+      <button onclick="resetCamera()" class="icon-pill" title="Đặt lại góc nhìn 3D chuẩn">
+        <span>🧭</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- BOTTOM INTERACTIVE DOCK (HIDES AUTOMATICALLY WHEN DATA SHEET OPENS) -->
+  <div id="bottom-bar" class="hud-bottom">
+    <div class="prompt-card">
+      <div class="prompt-top-row">
+        <div class="prompt-info">
+          <div id="bar-title" class="prompt-tag">DỮ LIỆU KHÔNG GIAN 3D • N = 16.471 CĂN HỘ (ĐỊNH DANH KHÔNG GIAN 3 TẦNG)</div>
+          <div id="bar-sub" class="prompt-sub">Chọn tòa nhà/nhà ga 3D để xem 3 tầng không gian (Vành đai Đô thị • Phường mới 2 cấp • Tiểu thị trường lịch sử)</div>
+        </div>
+        <button onclick="openSheet('summary')" id="bar-cta" class="cta-btn">Bảng Số Liệu ↑</button>
+      </div>
+
+      <!-- STEP 2: INTERACTIVE 3D DISTANCE SIMULATOR -->
+      <div id="exp-step2" class="exp-controls">
+        <div class="slider-meta-row">
+          <span style="color:#cbd5e1;">Cự ly đi bộ mạng lưới GIS: <strong id="exp-dist-txt" style="color:#34d399;">750 m (~9 phút)</strong></span>
+          <span id="exp-zone-badge" style="color:#6ee7b7;font-weight:700;">Vành đai 500–1000m: +3.91% ***</span>
+        </div>
+        <input type="range" id="exp-slider" min="150" max="1750" step="25" value="750" class="calc-range" oninput="updateExperimentDist(this.value)" />
+        <div class="preset-row">
+          <button onclick="updateExperimentDist(250)" id="chip-near" class="preset-chip">&lt;500m: +0.41% (ns)</button>
+          <button onclick="updateExperimentDist(750)" id="chip-sweet" class="preset-chip active-chip">500–1000m: +3.91%***</button>
+          <button onclick="updateExperimentDist(1550)" id="chip-far" class="preset-chip">&gt;1500m: 0.00% (Ref)</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: 3-TIER SPATIAL FIXED EFFECTS VS RAW PRICE SWITCH -->
+      <div id="exp-step3" class="exp-controls">
+        <div class="preset-row-2">
+          <button onclick="setProofView('bonus')" id="chip-proof-bonus" class="preset-chip active-chip">Mô hình 3–5: Kiểm soát Không gian 3 Tầng (FE)</button>
+          <button onclick="setProofView('raw')" id="chip-proof-raw" class="preset-chip">Giá chào bán thực tế (tr/m²)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ON-DEMAND DATA SCIENCE SHEET (HIDDEN BY DEFAULT) -->
+  <section id="info-sheet" class="info-sheet closed" aria-live="polite">
+    <div class="sheet-header">
+      <span id="sheet-badge" class="sheet-badge">PHÂN TÍCH DỮ LIỆU & KIỂM ĐỊNH THỐNG KÊ</span>
+      <button onclick="closeSheet()" class="close-btn" aria-label="Đóng">✕</button>
+    </div>
+    <div id="sheet-content" class="sheet-body"></div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- ARCHITECTURAL 3D ENGINE + SPATIAL DATA SCIENCE & HEDONIC ECONOMETRICS     -->
+  <!-- ========================================================================= -->
+  <script>
+    // =========================================================================
+    // 1. REAL WGS84 GPS PROJECTION (CENTER: TRUNG HÒA - NGÃ TƯ SỞ)
+    // =========================================================================
+    const LAT0 = 21.0105;
+    const LON0 = 105.8015;
+    const SCALE_KM = 8.8;
+
+    function gpsToWorld(lat, lon) {
+      return {
+        x: (lon - LON0) * 103.93 * SCALE_KM,
+        z: -(lat - LAT0) * 111.13 * SCALE_KM
+      };
+    }
+
+    function interpolateSpline(gpsList, subdivisions = 8) {
+      const raw = gpsList.map(p => ({
+        ...gpsToWorld(p[0], p[1]),
+        elev: p[2] !== undefined ? p[2] : 0
+      }));
+      if (raw.length < 2) return raw;
+
+      const out = [];
+      for (let i = 0; i < raw.length - 1; i++) {
+        const p0 = raw[Math.max(0, i - 1)];
+        const p1 = raw[i];
+        const p2 = raw[i + 1];
+        const p3 = raw[Math.min(raw.length - 1, i + 2)];
+
+        for (let s = 0; s < subdivisions; s++) {
+          const t = s / subdivisions, t2 = t * t, t3 = t2 * t;
+          const x = 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3);
+          const z = 0.5 * ((2 * p1.z) + (-p0.z + p2.z) * t + (2 * p0.z - 5 * p1.z + 4 * p2.z - p3.z) * t2 + (-p0.z + 3 * p1.z - 3 * p2.z + p3.z) * t3);
+          const elev = p1.elev + (p2.elev - p1.elev) * t;
+          out.push({ x, z, elev });
+        }
+      }
+      out.push({ ...raw[raw.length - 1] });
+
+      for (let i = 0; i < out.length; i++) {
+        const prev = out[Math.max(0, i - 1)];
+        const next = out[Math.min(out.length - 1, i + 1)];
+        const dx = next.x - prev.x;
+        const dz = next.z - prev.z;
+        const len = Math.hypot(dx, dz) || 1;
+        out[i].tx = dx / len;
+        out[i].tz = dz / len;
+        out[i].nx = -out[i].tz;
+        out[i].nz = out[i].tx;
+      }
+      return out;
+    }
+
+    // =========================================================================
+    // 2. OPENSTREETMAP / GOOGLE EARTH HYDROLOGY & ARTERIAL ROADS
+    // =========================================================================
+    const RED_RIVER_SPLINE = interpolateSpline([
+      [21.1060, 105.7550], [21.0950, 105.7880], [21.0840, 105.8160],
+      [21.0640, 105.8430], [21.0420, 105.8570], [21.0180, 105.8680],
+      [20.9920, 105.8880], [20.9650, 105.9080]
+    ], 10);
+
+    const TO_LICH_RIVER = interpolateSpline([
+      [21.0445, 105.8065], [21.0315, 105.8025], [21.0195, 105.8075],
+      [21.0068, 105.8162], [20.9965, 105.8195], [20.9785, 105.8225],
+      [20.9620, 105.8280]
+    ], 7);
+
+    const NHUE_RIVER = interpolateSpline([
+      [21.0680, 105.7560], [21.0420, 105.7610], [21.0180, 105.7640],
+      [20.9920, 105.7720], [20.9680, 105.7785], [20.9450, 105.7820]
+    ], 7);
+
+    const DAY_RIVER = interpolateSpline([
+      [21.0350, 105.7120], [21.0020, 105.7240], [20.9720, 105.7410],
+      [20.9460, 105.7435]
+    ], 6);
+
+    const HO_TAY_POLY = [
+      [21.0442, 105.8368], [21.0510, 105.8388], [21.0595, 105.8342],
+      [21.0685, 105.8260], [21.0715, 105.8185], [21.0660, 105.8115],
+      [21.0560, 105.8090], [21.0468, 105.8125], [21.0432, 105.8225],
+      [21.0428, 105.8315]
+    ].map(p => gpsToWorld(p[0], p[1]));
+
+    const HANOI_LAKES = [
+      { name: 'Hồ Hoàn Kiếm', lat: 21.0288, lon: 105.8522, rx: 1.5, rz: 2.1 },
+      { name: 'Hồ Hoàng Cầu', lat: 21.0182, lon: 105.8218, rx: 1.4, rz: 1.7 },
+      { name: 'Hồ Thủ Lệ', lat: 21.0285, lon: 105.8068, rx: 1.4, rz: 1.7 },
+      { name: 'Hồ Giảng Võ', lat: 21.0268, lon: 105.8202, rx: 1.2, rz: 1.4 },
+      { name: 'Hồ Thành Công', lat: 21.0208, lon: 105.8152, rx: 1.1, rz: 1.4 },
+      { name: 'Hồ Văn Quán', lat: 20.9765, lon: 105.7888, rx: 1.5, rz: 1.7 },
+      { name: 'Hồ Linh Đàm', lat: 20.9660, lon: 105.8285, rx: 2.9, rz: 2.5 }
+    ].map(lk => ({ ...lk, ...gpsToWorld(lk.lat, lk.lon) }));
+
+    const HANOI_PARKS = [
+      { name: 'SVĐ Quốc Gia Mỹ Đình', lat: 21.0205, lon: 105.7638, rx: 2.8, rz: 2.2 },
+      { name: 'Công Viên Thủ Lệ', lat: 21.0285, lon: 105.8068, rx: 2.2, rz: 2.2 },
+      { name: 'Công Viên Cầu Giấy', lat: 21.0272, lon: 105.7912, rx: 1.8, rz: 1.8 },
+      { name: 'Bệnh Viện Bạch Mai', lat: 21.0018, lon: 105.8405, rx: 1.6, rz: 1.6 }
+    ].map(pk => ({ ...pk, ...gpsToWorld(pk.lat, pk.lon) }));
+
+    const OSM_ROADS = [
+      {
+        type: 'motorway',
+        pts: interpolateSpline([
+          [21.0780, 105.7855], [21.0520, 105.7815], [21.0372, 105.7805],
+          [21.0220, 105.7795], [21.0068, 105.7915], [20.9912, 105.8038],
+          [20.9765, 105.8165], [20.9645, 105.8295], [20.9600, 105.8580]
+        ], 8)
+      },
+      {
+        type: 'motorway',
+        pts: interpolateSpline([
+          [21.0030, 105.7150], [21.0038, 105.7480], [21.0055, 105.7720],
+          [21.0068, 105.7915], [21.0125, 105.8035], [21.0215, 105.8115],
+          [21.0310, 105.8168], [21.0415, 105.8185]
+        ], 7)
+      },
+      {
+        type: 'primary',
+        pts: interpolateSpline([
+          [21.0780, 105.8120], [21.0550, 105.8065], [21.0420, 105.8058],
+          [21.0294, 105.8035], [21.0155, 105.8095], [21.0065, 105.8164],
+          [21.0032, 105.8196], [20.9985, 105.8340], [20.9965, 105.8520]
+        ], 7)
+      },
+      {
+        type: 'primary',
+        pts: interpolateSpline([
+          [20.9720, 105.7480], [20.9825, 105.7685], [20.9965, 105.7915],
+          [21.0075, 105.8065], [21.0165, 105.8155], [21.0265, 105.8245],
+          [21.0284, 105.8273]
+        ], 6)
+      },
+      {
+        type: 'secondary',
+        pts: interpolateSpline([
+          [21.0038, 105.7350], [20.9820, 105.7510], [20.9635, 105.7646],
+          [20.9585, 105.7820], [20.9520, 105.8020]
+        ], 6)
+      },
+      {
+        type: 'primary',
+        pts: interpolateSpline([
+          [21.0285, 105.8415], [21.0242, 105.8415], [21.0085, 105.8412],
+          [20.9985, 105.8412], [20.9750, 105.8415]
+        ], 6)
+      }
+    ];
+
+    // =========================================================================
+    // 3. REALISTIC PROPORTIONAL VIADUCT ELEVATION & CURVED SPLINES
+    // =========================================================================
+    const LINE_2A_WAYPOINTS = [
+      [21.0284, 105.8273, 2.5], [21.0252, 105.8266, 2.5], [21.0219, 105.8256, 2.5],
+      [21.0195, 105.8236, 2.5], [21.0170, 105.8226, 2.5], [21.0155, 105.8208, 2.5],
+      [21.0145, 105.8192, 2.5], [21.0110, 105.8165, 2.5], [21.0085, 105.8152, 2.5],
+      [21.0065, 105.8164, 2.5], [21.0042, 105.8184, 3.0], [21.0028, 105.8190, 3.3],
+      [21.0012, 105.8168, 2.7], [20.9988, 105.8132, 2.5], [20.9950, 105.8085, 2.5],
+      [20.9912, 105.8038, 2.8], [20.9878, 105.7992, 2.5], [20.9845, 105.7946, 2.5],
+      [20.9810, 105.7900, 2.5], [20.9774, 105.7852, 2.5], [20.9738, 105.7805, 2.5],
+      [20.9708, 105.7766, 2.5], [20.9672, 105.7706, 2.5], [20.9635, 105.7646, 2.5],
+      [20.9605, 105.7600, 2.5], [20.9575, 105.7554, 2.5], [20.9538, 105.7500, 2.5],
+      [20.9502, 105.7445, 2.5]
+    ];
+    const LINE_2A_SPLINE = interpolateSpline(LINE_2A_WAYPOINTS, 8);
+
+    const LINE_3_WAYPOINTS = [
+      [21.0528, 105.7332, 2.5], [21.0510, 105.7382, 2.5], [21.0492, 105.7432, 2.5],
+      [21.0468, 105.7502, 2.5], [21.0435, 105.7568, 2.5], [21.0412, 105.7612, 2.7],
+      [21.0398, 105.7655, 2.5], [21.0391, 105.7700, 2.5], [21.0385, 105.7745, 2.5],
+      [21.0376, 105.7802, 3.0], [21.0368, 105.7848, 2.5], [21.0363, 105.7902, 2.5],
+      [21.0358, 105.7955, 2.5], [21.0338, 105.7995, 2.5], [21.0315, 105.8018, 2.5],
+      [21.0294, 105.8035, 2.4], [21.0302, 105.8095, 0.8], [21.0310, 105.8168, 0.2],
+      [21.0298, 105.8225, 0.2], [21.0282, 105.8275, 0.2], [21.0268, 105.8358, 0.2],
+      [21.0242, 105.8415, 0.2]
+    ];
+    const LINE_3_SPLINE = interpolateSpline(LINE_3_WAYPOINTS, 8);
+
+    const STATIONS = [
+      { id: '2A-01', name: 'Ga Cát Linh', line: '2A', lat: 21.0284, lon: 105.8273, elev: 2.5, major: true, nObs: 842 },
+      { id: '2A-02', name: 'Ga La Thành', line: '2A', lat: 21.0219, lon: 105.8256, elev: 2.5, major: false, nObs: 510 },
+      { id: '2A-03', name: 'Ga Thái Hà', line: '2A', lat: 21.0145, lon: 105.8192, elev: 2.5, major: true, nObs: 628 },
+      { id: '2A-04', name: 'Ga Láng', line: '2A', lat: 21.0065, lon: 105.8164, elev: 2.5, major: false, nObs: 745 },
+      { id: '2A-05', name: 'Ga Thượng Đình', line: '2A', lat: 20.9988, lon: 105.8132, elev: 2.5, major: true, nObs: 1120 },
+      { id: '2A-06', name: 'Ga Vành Đai 3', line: '2A', lat: 20.9912, lon: 105.8038, elev: 2.8, major: true, nObs: 980 },
+      { id: '2A-07', name: 'Ga Phùng Khoang', line: '2A', lat: 20.9845, lon: 105.7946, elev: 2.5, major: false, nObs: 860 },
+      { id: '2A-08', name: 'Ga Văn Quán', line: '2A', lat: 20.9774, lon: 105.7852, elev: 2.5, major: true, nObs: 915 },
+      { id: '2A-09', name: 'Ga Hà Đông', line: '2A', lat: 20.9708, lon: 105.7766, elev: 2.5, major: true, nObs: 1040 },
+      { id: '2A-10', name: 'Ga La Khê', line: '2A', lat: 20.9635, lon: 105.7646, elev: 2.5, major: false, nObs: 790 },
+      { id: '2A-11', name: 'Ga Văn Khê', line: '2A', lat: 20.9575, lon: 105.7554, elev: 2.5, major: false, nObs: 685 },
+      { id: '2A-12', name: 'Ga Yên Nghĩa', line: '2A', lat: 20.9502, lon: 105.7445, elev: 2.5, major: true, nObs: 590 },
+      { id: '3-01', name: 'Ga Nhổn', line: '3', lat: 21.0528, lon: 105.7332, elev: 2.5, major: true, nObs: 460 },
+      { id: '3-02', name: 'Ga Minh Khai', line: '3', lat: 21.0492, lon: 105.7432, elev: 2.5, major: false, nObs: 410 },
+      { id: '3-03', name: 'Ga Phú Diễn', line: '3', lat: 21.0435, lon: 105.7568, elev: 2.5, major: false, nObs: 580 },
+      { id: '3-04', name: 'Ga Cầu Diễn', line: '3', lat: 21.0398, lon: 105.7655, elev: 2.5, major: true, nObs: 1180 },
+      { id: '3-05', name: 'Ga Lê Đức Thọ', line: '3', lat: 21.0385, lon: 105.7745, elev: 2.5, major: false, nObs: 720 },
+      { id: '3-06', name: 'Ga ĐH Quốc Gia', line: '3', lat: 21.0368, lon: 105.7848, elev: 2.5, major: true, nObs: 960 },
+      { id: '3-07', name: 'Ga Chùa Hà', line: '3', lat: 21.0358, lon: 105.7955, elev: 2.5, major: false, nObs: 810 },
+      { id: '3-08', name: 'Ga Cầu Giấy', line: '3', lat: 21.0294, lon: 105.8035, elev: 2.4, major: true, nObs: 690 },
+      { id: '3-09', name: 'Ga Kim Mã', line: '3', lat: 21.0310, lon: 105.8168, elev: 0.4, major: false, nObs: 420 },
+      { id: '3-10', name: 'Ga Văn Miếu', line: '3', lat: 21.0268, lon: 105.8358, elev: 0.4, major: false, nObs: 280 },
+      { id: '3-11', name: 'Ga Hà Nội', line: '3', lat: 21.0242, lon: 105.8415, elev: 0.4, major: true, nObs: 256 }
+    ].map(st => {
+      const w = gpsToWorld(st.lat, st.lon);
+      const sp = st.line === '2A' ? LINE_2A_SPLINE : LINE_3_SPLINE;
+      let best = sp[0], minD = Infinity;
+      sp.forEach(pt => {
+        const d = Math.hypot(pt.x - w.x, pt.z - w.z);
+        if (d < minD) { minD = d; best = pt; }
+      });
+      return { ...st, x: w.x, z: w.z, tx: best.tx, tz: best.tz, nx: best.nx, nz: best.nz };
+    });
+
+    // =========================================================================
+    // 4. EMPIRICAL DISTRICT TABLE & PROJECT-LEVEL STATISTICAL PROFILES
+    // =========================================================================
+    const DISTRICT_STATS = {
+      'Ba Đình':     { n: 420,  pct: '2.5%',  mean: 99.06, median: 87.36, sd: 35.98, area: 88.4 },
+      'Cầu Giấy':    { n: 2895, pct: '17.6%', mean: 83.39, median: 78.97, sd: 20.69, area: 89.2 },
+      'Bắc Từ Liêm': { n: 1643, pct: '10.0%', mean: 81.55, median: 80.00, sd: 18.69, area: 84.7 },
+      'Thanh Xuân':  { n: 2355, pct: '14.3%', mean: 81.27, median: 81.43, sd: 16.16, area: 91.5 },
+      'Đống Đa':     { n: 908,  pct: '5.5%',  mean: 78.75, median: 75.83, sd: 25.06, area: 82.1 },
+      'Nam Từ Liêm': { n: 4889, pct: '29.7%', mean: 76.68, median: 74.03, sd: 17.23, area: 94.6 },
+      'Hà Đông':     { n: 3361, pct: '20.4%', mean: 59.33, median: 57.26, sd: 13.03, area: 93.8 }
+    };
+
+    const URBAN_RING_STATS = {
+      'UZ1_Core_Ring1_2':           { name: 'Vùng 1: Lõi Nội Đô & Cận Vành Đai 2', radius: '0.0–5.2 km', n: 1559, pct: '9.47%',  mean: 92.43, median: 88.69, sd: 24.05, wards: 'Giảng Võ (HN_W01), Ngọc Hà (HN_W02), Ba Đình (HN_W03), Láng (HN_W04), Ô Chợ Dừa (HN_W05), Đống Đa (HN_W06)' },
+      'UZ2_Inner_Ring2_3':          { name: 'Vùng 2: Nội Đô Phát Triển (Vành Đai 2–3)', radius: '5.2–8.2 km', n: 5819, pct: '35.33%', mean: 83.49, median: 81.21, sd: 20.60, wards: 'Cầu Giấy (HN_W07), Yên Hòa (HN_W08), Nghĩa Đô (HN_W09), Thanh Xuân (HN_W10), Nhân Chính (HN_W11), Khương Đình (HN_W12)' },
+      'UZ3_West_Corridor_Ring3_35': { name: 'Vùng 3: Hành Lang Phía Tây (Vành Đai 3–3.5)', radius: '8.2–12.5 km', n: 5732, pct: '34.80%', mean: 80.16, median: 77.82, sd: 19.48, wards: 'Phú Diễn (HN_W13), Xuân Đỉnh (HN_W14), Đông Ngạc (HN_W15), Từ Liêm (HN_W16), Tây Mỗ (HN_W17), Mễ Trì (HN_W18)' },
+      'UZ4_Southwest_TOD_Ring35_4': { name: 'Vùng 4: Hành Lang Tây Nam (Vành Đai 3.5–4)', radius: '9.5–16.0 km', n: 3361, pct: '20.41%', mean: 60.09, median: 57.91, sd: 15.00, wards: 'Hà Đông (HN_W19), Dương Nội (HN_W20), Kiến Hưng (HN_W21)' }
+    };
+
+    const PROJECTS = [
+      {
+        id: 'P1', name: 'Royal City (72A Nguyễn Trãi)', district: 'Thanh Xuân',
+        urbanRingCode: 'UZ2_Inner_Ring2_3', urbanRingName: 'Vùng 2: Nội Đô Phát Triển VĐ2–3',
+        newWardCode: 'HN_W10', newWard: 'Phường Thanh Xuân (TP. Hà Nội)', legacyWard: 'P. Thượng Đình (cũ)', cbdDistKm: 5.02,
+        lat: 21.0022, lon: 105.8152, stLat: 20.9988, stLon: 105.8132,
+        station: 'Ga Thượng Đình (Tuyến 2A)', price: 88.7, median: 87.5, sd: 9.4, iqr: '81.2 – 95.8',
+        nObs: 412, area: 105.4, beds: 2.8, geocode: 'Project Exact GPS (100%)',
+        walk: 750, euclid: 568, zone: 'SWEET', floors: 35, twin: true,
+        analysis: 'Thu thập n = 412 tin đăng hợp lệ tại Phường Thanh Xuân mới (HN_W10, Vùng 2 VĐ2–3). Khoảng cách chim bay qua sông Tô Lịch là 568m nhưng cự ly đi bộ thực tế qua cầu bộ hành Ngã Tư Sở là 750m (Detour Ratio = 1.32). Mô hình Hedonic đa tầng xác nhận dự án hưởng trọn thặng dư vành đai 500–1.000m (β = +0.0354*** ở MH3 Vành đai Đô thị đến +0.0383*** hay +3.91% ở MH4 Tiểu thị trường) nhờ lùi sâu khỏi mặt đường Nguyễn Trãi, triệt tiêu hoàn toàn tiếng ồn cầu cạn.'
+      },
+      {
+        id: 'P2', name: 'Goldmark City (136 Hồ Tùng Mậu)', district: 'Bắc Từ Liêm',
+        urbanRingCode: 'UZ3_West_Corridor_Ring3_35', urbanRingName: 'Vùng 3: Hành Lang Phía Tây VĐ3–3.5',
+        newWardCode: 'HN_W13', newWard: 'Phường Phú Diễn (TP. Hà Nội)', legacyWard: 'P. Phú Diễn (cũ)', cbdDistKm: 9.40,
+        lat: 21.0352, lon: 105.7642, stLat: 21.0398, stLon: 105.7655,
+        station: 'Ga Cầu Diễn (Tuyến 3)', price: 84.2, median: 83.0, sd: 7.8, iqr: '78.5 – 89.4',
+        nObs: 385, area: 86.2, beds: 2.4, geocode: 'Project Exact GPS (100%)',
+        walk: 680, euclid: 515, zone: 'SWEET', floors: 40, twin: true,
+        analysis: 'Cỡ mẫu n = 385 quan sát tại Phường Phú Diễn mới (HN_W13, Vùng 3 VĐ3–3.5). So với mức trung bình khu vực Bắc Từ Liêm (81.55 tr/m²) và UZ3 (80.16 tr/m²), dự án đạt 84.20 tr/m². Kiểm định OLS HC3 xác nhận cự ly đi bộ 680m tới Ga Cầu Diễn nằm tại tâm điểm vùng vốn hóa tối ưu (500–1.000m), đóng góp mức thặng dư ròng +3.61% đến +3.91% (p < 0.001).'
+      },
+      {
+        id: 'P3', name: 'Discovery Complex (302 Cầu Giấy)', district: 'Cầu Giấy',
+        urbanRingCode: 'UZ2_Inner_Ring2_3', urbanRingName: 'Vùng 2: Nội Đô Phát Triển VĐ2–3',
+        newWardCode: 'HN_W07', newWard: 'Phường Cầu Giấy (TP. Hà Nội)', legacyWard: 'P. Dịch Vọng (cũ)', cbdDistKm: 6.34,
+        lat: 21.0354, lon: 105.7938, stLat: 21.0358, stLon: 105.7955,
+        station: 'Ga Chùa Hà (Tuyến 3)', price: 89.5, median: 88.2, sd: 11.2, iqr: '82.0 – 96.5',
+        nObs: 164, area: 98.5, beds: 2.6, geocode: 'Project Exact GPS (100%)',
+        walk: 320, euclid: 242, zone: 'NEAR', floors: 43, twin: true,
+        analysis: 'Cỡ mẫu n = 164 căn hộ tại Phường Cầu Giấy mới (HN_W07, Vùng 2 VĐ2–3). Nằm sát hành lang cầu cạn Tuyến 3 (cự ly đi bộ 320m tới Ga Chùa Hà). Mặc dù có kết nối trực tiếp, hệ số hồi quy của vành đai <500m chỉ đạt β = +0.0030 ở MH3 đến +0.0041 ở MH4 (p > 0.55 — không có ý nghĩa thống kê) do ngoại ứng tiêu cực (nuisance effect) từ tiếng ồn đoàn tàu, rung chấn và ùn tắc giao thông dưới chân ga.'
+      },
+      {
+        id: 'P4', name: 'King Palace (108 Nguyễn Trãi)', district: 'Thanh Xuân',
+        urbanRingCode: 'UZ2_Inner_Ring2_3', urbanRingName: 'Vùng 2: Nội Đô Phát Triển VĐ2–3',
+        newWardCode: 'HN_W10', newWard: 'Phường Thanh Xuân (TP. Hà Nội)', legacyWard: 'P. Thượng Đình (cũ)', cbdDistKm: 5.49,
+        lat: 20.9994, lon: 105.8118, stLat: 20.9988, stLon: 105.8132,
+        station: 'Ga Thượng Đình (Tuyến 2A)', price: 82.5, median: 81.8, sd: 8.6, iqr: '76.4 – 88.0',
+        nObs: 118, area: 94.0, beds: 2.5, geocode: 'Project Exact GPS (100%)',
+        walk: 410, euclid: 310, zone: 'NEAR', floors: 36, twin: false,
+        analysis: 'Cỡ mẫu n = 118 quan sát tại Phường Thanh Xuân mới (HN_W10). So sánh cặp đối chứng (Matched Pair) trực tiếp với Royal City trên cùng trục Nguyễn Trãi: King Palace gần Ga Thượng Đình hơn (410m vs. 750m) nhưng giá trung bình thấp hơn 6.2 tr/m² (82.5 vs. 88.7 tr/m²), minh chứng thực nghiệm rõ nét cho hiệu ứng khấu trừ tiếng ồn cầu cạn ở cự ly <500m.'
+      },
+      {
+        id: 'P5', name: 'Indochina Plaza - IPH (241 Xuân Thủy)', district: 'Cầu Giấy',
+        urbanRingCode: 'UZ2_Inner_Ring2_3', urbanRingName: 'Vùng 2: Nội Đô Phát Triển VĐ2–3',
+        newWardCode: 'HN_W07', newWard: 'Phường Cầu Giấy (TP. Hà Nội)', legacyWard: 'P. Dịch Vọng Hậu (cũ)', cbdDistKm: 7.51,
+        lat: 21.0364, lon: 105.7826, stLat: 21.0368, stLon: 105.7848,
+        station: 'Ga ĐH Quốc Gia (Tuyến 3)', price: 96.4, median: 94.8, sd: 12.5, iqr: '88.0 – 104.2',
+        nObs: 148, area: 108.2, beds: 2.7, geocode: 'Project Exact GPS (100%)',
+        walk: 290, euclid: 220, zone: 'NEAR', floors: 35, twin: true,
+        analysis: 'Cỡ mẫu n = 148 quan sát tại Phường Cầu Giấy mới (HN_W07). Mức giá cao xuất phát từ chất lượng công trình hạng A và vị trí lõi Cầu Giấy. Khi kiểm soát không gian 3 tầng và diện tích trong Mô hình 3–5, phần thặng dư thuần túy do vị trí sát ga <500m (290m) bị triệt tiêu (β = +0.0018 đến +0.0041, ns) bởi xung đột giao thông tại nút giao Mai Dịch – Xuân Thủy.'
+      },
+      {
+        id: 'P6', name: 'Mipec Rubik 360 (122 Xuân Thủy)', district: 'Cầu Giấy',
+        urbanRingCode: 'UZ2_Inner_Ring2_3', urbanRingName: 'Vùng 2: Nội Đô Phát Triển VĐ2–3',
+        newWardCode: 'HN_W07', newWard: 'Phường Cầu Giấy (TP. Hà Nội)', legacyWard: 'P. Dịch Vọng Hậu (cũ)', cbdDistKm: 6.94,
+        lat: 21.0388, lon: 105.7885, stLat: 21.0368, stLon: 105.7848,
+        station: 'Ga ĐH Quốc Gia (Tuyến 3)', price: 92.8, median: 91.5, sd: 8.9, iqr: '86.0 – 98.4',
+        nObs: 192, area: 78.5, beds: 2.2, geocode: 'Project Exact GPS (100%)',
+        walk: 620, euclid: 470, zone: 'SWEET', floors: 35, twin: true,
+        analysis: 'Cỡ mẫu n = 192 quan sát tại Phường Cầu Giấy mới (HN_W07). Lùi sâu vào khuôn viên 122 Xuân Thủy với cự ly đi bộ GIS 620m tới Ga ĐH Quốc Gia, dự án tách biệt hoàn toàn khỏi tiếng ồn mặt đường Xuân Thủy nhưng giữ thời gian tiếp cận đi bộ ~7.5 phút, đạt thặng dư vốn hóa tối ưu +3.61% đến +3.91% (p < 0.001).'
+      },
+      {
+        id: 'P7', name: 'Vinhomes Metropolis (29 Liễu Giai)', district: 'Ba Đình',
+        urbanRingCode: 'UZ1_Core_Ring1_2', urbanRingName: 'Vùng 1: Lõi Nội Đô & Cận VĐ2',
+        newWardCode: 'HN_W02', newWard: 'Phường Ngọc Hà (TP. Hà Nội)', legacyWard: 'P. Ngọc Khánh (cũ)', cbdDistKm: 4.09,
+        lat: 21.0318, lon: 105.8152, stLat: 21.0310, stLon: 105.8168,
+        station: 'Ga Kim Mã / Cầu Giấy (Tuyến 3)', price: 118.5, median: 115.0, sd: 18.4, iqr: '104.5 – 131.0',
+        nObs: 156, area: 110.5, beds: 2.9, geocode: 'Project Exact GPS (100%)',
+        walk: 540, euclid: 410, zone: 'SWEET', floors: 45, twin: true,
+        analysis: 'Cỡ mẫu n = 156 quan sát thuộc phân khúc hạng sang tại Phường Ngọc Hà mới (HN_W02, Vùng 1 Lõi Nội Đô UZ1: 92.43 tr/m², Ba Đình: 99.06 tr/m²). Sau khi kiểm soát không gian 3 tầng trong Mô hình 3–5, phần đóng góp thuần của khả năng tiếp cận đi bộ (540m) được xác lập chính xác ở mức +3.61% đến +3.91%.'
+      },
+      {
+        id: 'P8', name: 'Lancaster Núi Trúc', district: 'Ba Đình',
+        urbanRingCode: 'UZ1_Core_Ring1_2', urbanRingName: 'Vùng 1: Lõi Nội Đô & Cận VĐ2',
+        newWardCode: 'HN_W01', newWard: 'Phường Giảng Võ (TP. Hà Nội)', legacyWard: 'P. Giảng Võ (cũ)', cbdDistKm: 3.21,
+        lat: 21.0292, lon: 105.8235, stLat: 21.0284, stLon: 105.8273,
+        station: 'Ga Cát Linh (Tuyến 2A & 3)', price: 112.4, median: 109.5, sd: 15.2, iqr: '99.0 – 122.5',
+        nObs: 94, area: 96.8, beds: 2.4, geocode: 'Project Exact GPS (100%)',
+        walk: 640, euclid: 485, zone: 'SWEET', floors: 27, twin: false,
+        analysis: 'Cỡ mẫu n = 94 quan sát tại Phường Giảng Võ mới (HN_W01, Vùng 1 Lõi Nội Đô UZ1). Cách nút giao trung chuyển Ga Cát Linh 640m đi bộ qua trục Giảng Võ – Núi Trúc, hưởng lợi ích kép từ hiệu ứng mạng lưới trung chuyển trong vành đai 500–1.000m (+3.61% đến +3.91%).'
+      },
+      {
+        id: 'P9', name: 'Seasons Avenue (KĐT Mỗ Lao)', district: 'Hà Đông',
+        urbanRingCode: 'UZ4_Southwest_TOD_Ring35_4', urbanRingName: 'Vùng 4: Hành Lang Tây Nam VĐ3.5–4',
+        newWardCode: 'HN_W19', newWard: 'Phường Hà Đông (TP. Hà Nội)', legacyWard: 'P. Mộ Lao (cũ)', cbdDistKm: 8.37,
+        lat: 20.9862, lon: 105.7878, stLat: 20.9845, stLon: 105.7946,
+        station: 'Ga Phùng Khoang (Tuyến 2A)', price: 66.2, median: 65.4, sd: 6.5, iqr: '61.5 – 70.8',
+        nObs: 310, area: 84.0, beds: 2.3, geocode: 'Project Exact GPS (100%)',
+        walk: 740, euclid: 560, zone: 'SWEET', floors: 40, twin: true,
+        analysis: 'Cỡ mẫu n = 310 quan sát tại Phường Hà Đông mới (HN_W19, Vùng 4 Tây Nam UZ4). Với cự ly đi bộ 740m ra Ga Phùng Khoang qua trục đường nội khu có vỉa hè rộng, dự án đạt mức giá 66.2 tr/m², cao hơn 11.5% so với trung bình khu vực Hà Đông (59.33 tr/m²), trong đó Metro đóng góp ròng +3.61% đến +3.91%.'
+      },
+      {
+        id: 'P10', name: 'The Pride (Tố Hữu - La Khê)', district: 'Hà Đông',
+        urbanRingCode: 'UZ4_Southwest_TOD_Ring35_4', urbanRingName: 'Vùng 4: Hành Lang Tây Nam VĐ3.5–4',
+        newWardCode: 'HN_W20', newWard: 'Phường Dương Nội (TP. Hà Nội)', legacyWard: 'P. La Khê (cũ)', cbdDistKm: 11.62,
+        lat: 20.9718, lon: 105.7605, stLat: 20.9635, stLon: 105.7646,
+        station: 'Ga La Khê (Tuyến 2A)', price: 58.4, median: 57.8, sd: 5.9, iqr: '54.0 – 62.5',
+        nObs: 275, area: 89.5, beds: 2.5, geocode: 'Project Exact GPS (100%)',
+        walk: 890, euclid: 674, zone: 'SWEET', floors: 35, twin: true,
+        analysis: 'Cỡ mẫu n = 275 quan sát tại Phường Dương Nội mới (HN_W20, Vùng 4 Tây Nam UZ4). Cự ly đi bộ mạng lưới đường bộ 890m dọc Lê Trọng Tấn – Quang Trung tới Ga La Khê, nằm trong vành đai đi bộ tối ưu 500–1.000m (+3.61% đến +3.91%).'
+      },
+      {
+        id: 'P11', name: 'KĐT Trung Hòa - Nhân Chính', district: 'Cầu Giấy',
+        urbanRingCode: 'UZ2_Inner_Ring2_3', urbanRingName: 'Vùng 2: Nội Đô Phát Triển VĐ2–3',
+        newWardCode: 'HN_W08', newWard: 'Phường Yên Hòa (TP. Hà Nội)', legacyWard: 'P. Trung Hòa (cũ)', cbdDistKm: 5.67,
+        lat: 21.0078, lon: 105.8045, stLat: 21.0065, stLon: 105.8164,
+        station: 'Ga Láng (Tuyến 2A)', price: 76.3, median: 75.0, sd: 9.8, iqr: '69.5 – 82.5',
+        nObs: 465, area: 88.0, beds: 2.4, geocode: 'Ward / Cluster Centroid',
+        walk: 1250, euclid: 946, zone: 'BUFFER', floors: 24, twin: false,
+        analysis: 'Cỡ mẫu n = 465 quan sát tại Phường Yên Hòa mới (HN_W08, Vùng 2 VĐ2–3). Mặc dù khoảng cách chim bay là 946m (<1km), cự ly đi bộ thực tế qua các nút giao Hoàng Đạo Thúy – Lê Văn Lương – Đường Láng lên tới 1.250m (thuộc vành đai đệm 1.000–1.500m). Hệ số hồi quy giảm mạnh về β ≈ 0 (p > 0.79), chứng minh việc dùng đường chim bay sẽ phân loại sai dự án này.'
+      },
+      {
+        id: 'P12', name: 'Khu Đô Thị Xa La', district: 'Hà Đông',
+        urbanRingCode: 'UZ4_Southwest_TOD_Ring35_4', urbanRingName: 'Vùng 4: Hành Lang Tây Nam VĐ3.5–4',
+        newWardCode: 'HN_W21', newWard: 'Phường Kiến Hưng (TP. Hà Nội)', legacyWard: 'P. Phúc La / Kiến Hưng (cũ)', cbdDistKm: 9.92,
+        lat: 20.9612, lon: 105.7918, stLat: 20.9708, stLon: 105.7766,
+        station: 'Ga Hà Đông (Tuyến 2A)', price: 46.8, median: 46.0, sd: 5.4, iqr: '42.5 – 50.5',
+        nObs: 520, area: 72.4, beds: 2.1, geocode: 'Project Exact GPS (100%)',
+        walk: 2100, euclid: 1590, zone: 'FAR', floors: 30, twin: true,
+        analysis: 'Cỡ mẫu n = 520 quan sát tại Phường Kiến Hưng mới (HN_W21, Vùng 4 Tây Nam UZ4), thuộc nhóm đối chiếu (Reference Group >1.500m, cự ly đi bộ 2.100m tới Ga Hà Đông). Vượt quá ngưỡng đi bộ 15–18 phút trong điều kiện khí hậu Hà Nội, cư dân phụ thuộc hoàn toàn vào xe máy cá nhân, mức vốn hóa Metro bằng 0%.'
+      },
+      {
+        id: 'P13', name: 'Vinhomes Smart City (Tây Mỗ)', district: 'Nam Từ Liêm',
+        urbanRingCode: 'UZ3_West_Corridor_Ring3_35', urbanRingName: 'Vùng 3: Hành Lang Phía Tây VĐ3–3.5',
+        newWardCode: 'HN_W17', newWard: 'Phường Tây Mỗ (TP. Hà Nội)', legacyWard: 'P. Tây Mỗ (cũ)', cbdDistKm: 11.93,
+        lat: 21.0042, lon: 105.7425, stLat: 21.0398, stLon: 105.7655,
+        station: 'Ga Cầu Diễn (Tuyến 3)', price: 74.5, median: 73.8, sd: 8.2, iqr: '68.5 – 80.2',
+        nObs: 1420, area: 66.8, beds: 2.0, geocode: 'Project Exact GPS (100%)',
+        walk: 3800, euclid: 2880, zone: 'FAR', floors: 38, twin: true,
+        analysis: 'Cụm đại đô thị tại Phường Tây Mỗ mới (HN_W17, Vùng 3 Hành Lang Tây UZ3). Cách Ga Cầu Diễn 3.8km, nằm ngoài vùng phục vụ đi bộ của Tuyến 2A & Tuyến 3 hiện hữu (nhóm đối chiếu >1.500m).'
+      }
+    ].map(p => {
+      const w = gpsToWorld(p.lat, p.lon);
+      const s = gpsToWorld(p.stLat, p.stLon);
+      return { ...p, x: w.x, z: w.z, sx: s.x, sz: s.z };
+    });
+
+    function isInsideWater(wx, wz) {
+      const htMin = gpsToWorld(21.042, 105.806);
+      const htMax = gpsToWorld(21.073, 105.842);
+      if (wx >= htMin.x && wx <= htMax.x && wz <= htMin.z && wz >= htMax.z) return true;
+      for (const lk of HANOI_LAKES) {
+        if (Math.hypot(wx - lk.x, wz - lk.z) < Math.max(lk.rx, lk.rz) + 1.2) return true;
+      }
+      return false;
+    }
+
+    const URBAN_BLOCKS = [];
+    let seed = 2026;
+    function sRand() { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }
+    STATIONS.forEach(st => {
+      for (let i = 0; i < 6; i++) {
+        const ang = sRand() * Math.PI * 2;
+        const distU = 2.6 + sRand() * 8.5;
+        const bx = st.x + Math.cos(ang) * distU;
+        const bz = st.z + Math.sin(ang) * distU;
+        if (isInsideWater(bx, bz)) continue;
+        const zone = distU < 4.2 ? 'NEAR' : (distU < 8.2 ? 'SWEET' : 'BUFFER');
+        URBAN_BLOCKS.push({
+          x: bx,
+          z: bz,
+          h: 2.0 + sRand() * 4.2,
+          w: 1.0 + sRand() * 0.45,
+          zone
+        });
+      }
+    });
+
+    // =========================================================================
+    // 5. STATE & DATA SCIENCE UI HANDLERS
+    // =========================================================================
+    const state = {
+      step: 1,
+      mapTheme: 'earth',
+      selectedProject: PROJECTS[0],
+      selectedStation: null,
+      followTrain: false,
+      experimentDist: 750,
+      proofView: 'bonus',
+      activeSummaryTab: 'ols', // 'ols' | 'districts' | 'method'
+      time: 0,
+      cam: {
+        tx: -1, ty: 1.5, tz: 3,
+        yaw: -0.22, pitch: 0.66, dist: 72,
+        goalTx: -1, goalTy: 1.5, goalTz: 3,
+        goalYaw: -0.22, goalPitch: 0.66, goalDist: 72
+      },
+      trains: [
+        { line: '2A', prog: 0.34, dir: 1, speed: 0.0014, color: '#10b981' },
+        { line: '2A', prog: 0.76, dir: -1, speed: 0.0014, color: '#10b981' },
+        { line: '3', prog: 0.25, dir: 1, speed: 0.0016, color: '#3b82f6' },
+        { line: '3', prog: 0.66, dir: -1, speed: 0.0016, color: '#3b82f6' }
+      ]
+    };
+
+    function updateExperimentDist(val) {
+      const dm = Number(val);
+      state.experimentDist = dm;
+      const slider = document.getElementById('exp-slider');
+      if (slider) slider.value = dm;
+
+      const mins = Math.max(1, Math.round(dm / 83));
+      const distTxt = document.getElementById('exp-dist-txt');
+      const badge = document.getElementById('exp-zone-badge');
+      if (distTxt) distTxt.textContent = `${dm} m (~${mins} phút)`;
+
+      document.getElementById('chip-near')?.classList.toggle('active-chip', dm < 500);
+      document.getElementById('chip-sweet')?.classList.toggle('active-chip', dm >= 500 && dm <= 1000);
+      document.getElementById('chip-far')?.classList.toggle('active-chip', dm > 1000);
+
+      if (badge) {
+        if (dm < 500) {
+          badge.style.color = '#93c5fd';
+          badge.textContent = 'Vành đai <500m: +0.41% (p = 0.415, ns)';
+        } else if (dm <= 1000) {
+          badge.style.color = '#6ee7b7';
+          badge.textContent = 'Vành đai 500–1000m: +3.91% *** (p < 0.001)';
+        } else if (dm <= 1500) {
+          badge.style.color = '#fcd34d';
+          badge.textContent = 'Vành đai 1000–1500m: +0.02% (p = 0.968, ns)';
+        } else {
+          badge.style.color = '#fda4af';
+          badge.textContent = 'Vành đai >1500m: 0.00% (Nhóm đối chiếu)';
+        }
+      }
+    }
+
+    function setProofView(mode) {
+      state.proofView = mode;
+      document.getElementById('chip-proof-bonus')?.classList.toggle('active-chip', mode === 'bonus');
+      document.getElementById('chip-proof-raw')?.classList.toggle('active-chip', mode === 'raw');
+    }
+
+    function switchSummaryTab(tabName) {
+      state.activeSummaryTab = tabName;
+      openSheet('summary');
+    }
+
+    function setStep(n) {
+      state.step = n;
+      state.followTrain = false;
+      document.getElementById('btn-train').classList.remove('active-mode');
+      document.getElementById('train-label').textContent = 'Theo Tàu';
+
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`step-${i}`);
+        btn.className = (i === n) ? 'nav-btn active' : 'nav-btn';
+      }
+
+      document.getElementById('exp-step2').classList.toggle('active', n === 2);
+      document.getElementById('exp-step3').classList.toggle('active', n === 3);
+
+      const bTitle = document.getElementById('bar-title');
+      const bSub = document.getElementById('bar-sub');
+      const bCta = document.getElementById('bar-cta');
+
+      if (n === 1) {
+        closeSheet();
+        bTitle.textContent = 'DỮ LIỆU KHÔNG GIAN 3D • N = 16.471 CĂN HỘ (ĐỊNH DANH KHÔNG GIAN 3 TẦNG)';
+        bSub.textContent = 'Chọn tòa nhà/nhà ga 3D để xem 3 tầng không gian (Vành đai Đô thị • Phường mới 2 cấp • Tiểu thị trường lịch sử)';
+        bCta.textContent = 'Bảng Số Liệu ↑';
+        state.cam.goalTx = -1; state.cam.goalTy = 1.5; state.cam.goalTz = 3;
+        state.cam.goalYaw = -0.20; state.cam.goalPitch = 0.66; state.cam.goalDist = 72;
+      } else if (n === 2) {
+        closeSheet();
+        bTitle.textContent = 'MÔ PHỎNG CỰ LY TIẾP CẬN MẠNG LƯỚI (GIS NETWORK DISTANCE)';
+        bSub.textContent = 'Điều chỉnh thanh trượt để kiểm chứng sự đánh đổi giữa tiện ích tiếp cận và ngoại ứng cầu cạn';
+        bCta.textContent = 'Bảng Kiểm Định ↑';
+        const st = state.selectedProject || PROJECTS[0];
+        state.cam.goalTx = st.sx + 3.2; state.cam.goalTy = 2.0; state.cam.goalTz = st.sz + 1.5;
+        state.cam.goalYaw = -0.35; state.cam.goalPitch = 0.52; state.cam.goalDist = 34;
+      } else if (n === 3) {
+        bTitle.textContent = 'KIỂM ĐỊNH HEDONIC ĐA TẦNG (M1–M6) • HIỆU ỨNG CHỮ U NGƯỢC & BẤT BIẾN MAUP';
+        bSub.textContent = 'Đối chiếu hệ số ước lượng giữa Vành đai Đô thị (M3), Tiểu thị trường lịch sử (M4) & 21 Phường mới 2 cấp (M5)';
+        bCta.textContent = 'Bảng Hồi Quy ↑';
+        const st = state.selectedProject || PROJECTS[0];
+        const dOff = window.innerWidth > 720 ? 11.5 : 4.5;
+        state.cam.goalTx = st.sx + dOff; state.cam.goalTy = 2.5; state.cam.goalTz = st.sz + 2.5;
+        state.cam.goalYaw = -0.28; state.cam.goalPitch = 0.52; state.cam.goalDist = 42;
+        openSheet('summary');
+      } else if (n === 4) {
+        bTitle.textContent = 'MÔ HÌNH LƯỢNG HÓA GIÁ TRỊ CĂN HỘ ĐA TẦNG (HEDONIC VALUATION)';
+        bSub.textContent = 'Ước lượng giá chào bán và thặng dư vốn hóa đường sắt đô thị theo 3 tầng không gian';
+        bCta.textContent = 'Mở Mô Hình ↑';
+        openSheet('calc');
+      }
+    }
+
+    function toggleMapTheme() {
+      state.mapTheme = state.mapTheme === 'earth' ? 'osm' : 'earth';
+      const btn = document.getElementById('btn-theme');
+      const lbl = document.getElementById('theme-label');
+      if (state.mapTheme === 'osm') {
+        btn.classList.add('active-mode');
+        lbl.textContent = 'Nền 3D Earth';
+      } else {
+        btn.classList.remove('active-mode');
+        lbl.textContent = 'Nền OSM';
+      }
+    }
+
+    function toggleTrainCam() {
+      state.followTrain = !state.followTrain;
+      const btn = document.getElementById('btn-train');
+      const lbl = document.getElementById('train-label');
+      if (state.followTrain) {
+        btn.classList.add('active-mode');
+        lbl.textContent = 'Đang Theo Tàu';
+        closeSheet();
+      } else {
+        btn.classList.remove('active-mode');
+        lbl.textContent = 'Theo Tàu';
+        resetCamera();
+      }
+    }
+
+    function resetCamera() {
+      state.followTrain = false;
+      document.getElementById('btn-train').classList.remove('active-mode');
+      document.getElementById('train-label').textContent = 'Theo Tàu';
+      state.cam.goalTx = -1;
+      state.cam.goalTy = 1.5;
+      state.cam.goalTz = 3;
+      state.cam.goalYaw = -0.20;
+      state.cam.goalPitch = 0.66;
+      state.cam.goalDist = 72;
+    }
+
+    function closeSheet() {
+      document.getElementById('info-sheet').classList.add('closed');
+      document.getElementById('bottom-bar').classList.remove('hidden-bar');
+    }
+
+    function openSheet(mode) {
+      const sheet = document.getElementById('info-sheet');
+      const badge = document.getElementById('sheet-badge');
+      const content = document.getElementById('sheet-content');
+      sheet.classList.remove('closed');
+      // Always hide bottom-bar while sheet is open so no text is ever covered or clipped!
+      document.getElementById('bottom-bar').classList.add('hidden-bar');
+
+      if (mode === 'project' && state.selectedProject) {
+        const p = state.selectedProject;
+        const dStat = DISTRICT_STATS[p.district] || DISTRICT_STATS['Cầu Giấy'];
+        const detour = (p.walk / p.euclid).toFixed(2);
+        const premMap = {
+          SWEET: { beta: '+0.0383***', se: '0.0048', pct: '+3.91% ***', pval: 'p < 0.001', tag: 'VÀNH ĐAI TỐI ƯU 500–1000M (+3.61%..+3.91% ***)', col: '#34d399' },
+          NEAR:  { beta: '+0.0041 (ns)', se: '0.0069', pct: '+0.41% (ns)', pval: 'p = 0.553', tag: 'VÀNH ĐAI SÁT GA <500M (+0.30%..+0.41% ns)', col: '#60a5fa' },
+          BUFFER:{ beta: '+0.0002 (ns)', se: '0.0057', pct: '+0.02% (ns)', pval: 'p = 0.972', tag: 'VÀNH ĐAI ĐỆM 1000–1500M (+0.02% ns)', col: '#fbbf24' },
+          FAR:   { beta: '0.0000 (Ref)', se: '—',      pct: '0.00% (Ref)', pval: 'Nhóm cơ sở', tag: 'NGOÀI VÙNG ĐI BỘ >1500M (NHÓM ĐỐI CHIẾU)', col: '#fb7185' }
+        };
+        const z = premMap[p.zone];
+        const metroValPerM2 = (p.price * (p.zone === 'SWEET' ? 0.0391 : (p.zone === 'NEAR' ? 0.0041 : 0))).toFixed(2);
+        const microDiff = (p.price - dStat.mean - parseFloat(metroValPerM2)).toFixed(2);
+
+        badge.textContent = z.tag;
+        content.innerHTML = `
+          <div>
+            <div style="font-size:12px;color:#94a3b8;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+              <span>${p.newWard} • Tiểu thị trường ${p.district} • ${p.station}</span>
+              <span style="color:#38bdf8;font-weight:700;">Mẫu: n = ${p.nObs} căn hộ</span>
+            </div>
+            <h2 style="font-size:15px;font-weight:800;margin:3px 0 6px;color:#ffffff;">${p.name}</h2>
+            <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;">
+              <span style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:#6ee7b7;font-weight:700;">Tầng 1: ${p.urbanRingName} (${p.cbdDistKm}km CBD)</span>
+              <span style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(59,130,246,0.16);border:1px solid rgba(59,130,246,0.4);color:#93c5fd;font-weight:700;">Tầng 2 (Chính quyền 2 cấp): ${p.newWardCode} — ${p.newWard}</span>
+              <span style="font-size:10.5px;padding:2px 7px;border-radius:6px;background:rgba(245,158,11,0.14);border:1px solid rgba(245,158,11,0.38);color:#fcd34d;font-weight:600;">Tầng 3 (Lịch sử): Q. ${p.district} (${p.legacyWard})</span>
+            </div>
+
+            <!-- 6-Card Statistical Summary (Zero truncation on Desktop & Mobile) -->
+            <div class="metric-grid-3">
+              <div class="metric-box">
+                <div class="metric-label">Cỡ mẫu (n)</div>
+                <div class="metric-val" style="color:#38bdf8;">${p.nObs} <span style="font-size:11px;font-weight:500;color:#94a3b8;">căn</span></div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-label">Giá TB (Mean)</div>
+                <div class="metric-val" style="color:#ffffff;">${p.price} <span style="font-size:11px;font-weight:500;color:#94a3b8;">tr/m²</span></div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-label">Trung vị (Med)</div>
+                <div class="metric-val" style="color:#cbd5e1;">${p.median} <span style="font-size:11px;font-weight:500;color:#94a3b8;">tr/m²</span></div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-label">Độ lệch (SD)</div>
+                <div class="metric-val" style="color:#cbd5e1;">±${p.sd} <span style="font-size:11px;font-weight:500;color:#94a3b8;">tr</span></div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-label">Bộ hành GIS</div>
+                <div class="metric-val" style="color:#34d399;">${p.walk} m</div>
+              </div>
+              <div class="metric-box">
+                <div class="metric-label">Đường chim bay</div>
+                <div class="metric-val" style="color:#94a3b8;">${p.euclid} m</div>
+              </div>
+            </div>
+
+            <!-- Hedonic Price Decomposition Table -->
+            <div style="font-size:12px;font-weight:700;color:#cbd5e1;margin-top:10px;">Bảng Phân Rã Giá Hedonic (Kiểm soát Không gian 3 Tầng M3–M5):</div>
+            <div class="ds-table-wrap">
+              <table class="ds-table">
+                <thead>
+                  <tr>
+                    <th>Thành phần định giá</th>
+                    <th>Tham số / Kiểm định</th>
+                    <th style="text-align:right;">Giá trị</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1. Giá nền Khu vực (${p.district})</td>
+                    <td>N = ${dStat.n} (${dStat.pct}) • ${p.newWardCode}</td>
+                    <td style="text-align:right;">${dStat.mean.toFixed(2)} tr/m²</td>
+                  </tr>
+                  <tr>
+                    <td>2. Cấu trúc &amp; Vị trí vi mô</td>
+                    <td>${p.area}m² • ${p.beds}PN • ${p.cbdDistKm}km CBD</td>
+                    <td style="text-align:right;">${microDiff >= 0 ? '+' : ''}${microDiff} tr/m²</td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <td>3. Vốn hóa Metro (${p.walk}m)</td>
+                    <td>β = ${z.beta}<span class="se-sub">${z.pval} (SE: ${z.se})</span></td>
+                    <td style="text-align:right;">+${metroValPerM2} tr/m²<span class="se-sub">(${z.pct})</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Tổng giá chào bán TB</strong></td>
+                    <td><strong>IQR: ${p.iqr} tr</strong></td>
+                    <td style="text-align:right;"><strong>${p.price.toFixed(2)} tr/m²</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Academic Analysis -->
+            <div class="insight-box">
+              <div style="font-weight:700;color:#34d399;margin-bottom:3px;">Phân tích Thực nghiệm &amp; Kiểm định Giả thuyết:</div>
+              <div>${p.analysis}</div>
+              <div style="margin-top:5px;padding-top:5px;border-top:1px solid rgba(148,163,184,0.16);color:#94a3b8;">
+                • <strong>Định vị:</strong> ${p.geocode} • <strong>Detour Index:</strong> ${detour}x (${p.walk}m GIS / ${p.euclid}m Euclid).
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <button onclick="openSheet('summary')" class="chip-btn">📊 Bảng Hồi Quy Toàn Mẫu</button>
+              <button onclick="setStep(2)" class="chip-btn" style="border-color:rgba(59,130,246,0.5);background:rgba(59,130,246,0.16);color:#93c5fd;">🔬 Mô Phỏng Cự Ly 3D</button>
+            </div>
+          </div>
+        `;
+      } else if (mode === 'station' && state.selectedStation) {
+        const st = state.selectedStation;
+        badge.textContent = st.line === '2A' ? 'THỐNG KÊ VÙNG PHỤC VỤ NHÀ GA — TUYẾN 2A' : 'THỐNG KÊ VÙNG PHỤC VỤ NHÀ GA — TUYẾN 3';
+        content.innerHTML = `
+          <div>
+            <div style="font-size:12px;color:#94a3b8;">Tọa độ WGS84: ${st.lat.toFixed(4)}°N, ${st.lon.toFixed(4)}°E • Mẫu vùng đệm: n = ${st.nObs} căn hộ</div>
+            <h2 style="font-size:16px;font-weight:800;margin:4px 0 8px;color:#ffffff;">${st.name}</h2>
+
+            <div class="ds-table-wrap">
+              <table class="ds-table">
+                <thead>
+                  <tr>
+                    <th>Vành đai cự ly (GIS)</th>
+                    <th>MH3 (Vành đai)</th>
+                    <th>MH4 (Lịch sử)</th>
+                    <th>MH5 (21 Phường mới)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Vành đai 1 (&lt; 500m)</td>
+                    <td>+0.30% (ns)<span class="se-sub">β=0.0030</span></td>
+                    <td>+0.41% (ns)<span class="se-sub">β=0.0041</span></td>
+                    <td>+0.18% (ns)<span class="se-sub">β=0.0018</span></td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <td>Vành đai 2 (500–1000m)</td>
+                    <td><strong>+3.61%***</strong><span class="se-sub">β=0.0354***</span></td>
+                    <td><strong>+3.91%***</strong><span class="se-sub">β=0.0383***</span></td>
+                    <td><strong>+3.73%***</strong><span class="se-sub">β=0.0366***</span></td>
+                  </tr>
+                  <tr>
+                    <td>Vành đai 3 (1000–1500m)</td>
+                    <td>-0.15% (ns)<span class="se-sub">β=-0.0015</span></td>
+                    <td>+0.02% (ns)<span class="se-sub">β=0.0002</span></td>
+                    <td>+0.01% (ns)<span class="se-sub">β=0.0001</span></td>
+                  </tr>
+                  <tr>
+                    <td>Đối chiếu (&gt; 1500m)</td>
+                    <td>0.00% (Ref)</td>
+                    <td>0.00% (Ref)</td>
+                    <td>0.00% (Ref)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="insight-box">
+              <strong>Cơ chế Kinh tế học Đô thị quanh ${st.name}:</strong> Vòng tròn đỏ (&lt;500m) chịu tác động ngoại ứng tiếng ồn cầu cạn và xung đột giao thông tại lối lên xuống nhà ga. Vòng tròn xanh ngọc (500–1.000m) là vùng đi bộ lý tưởng (6–10 phút), nơi thặng dư vốn hóa đạt cực đại <strong>+3.61% đến +3.91%***</strong> bất biến trên cả 3 tầng không gian.
+            </div>
+            <button onclick="setStep(2)" class="chip-btn">🔬 Chạy Mô Phỏng Cự Ly 3D Tại Ga</button>
+          </div>
+        `;
+      } else if (mode === 'calc') {
+        badge.textContent = 'MÔ HÌNH LƯỢNG HÓA GIÁ TRỊ HEDONIC ĐA TẦNG (OLS HC3)';
+        content.innerHTML = `
+          <div>
+            <div style="font-size:12px;color:#cbd5e1;margin-bottom:10px;line-height:1.45;">
+              Phương trình ước lượng chuẩn (Kiến trúc Không gian 3 Tầng M3–M5, R² = 0.2470–0.2500):<br/>
+              <code style="color:#6ee7b7;font-size:12px;">ln(Price/m²) = β₀ + β_TOD·Band + 0.0009·Area - 0.0389·Beds - 0.0522·ln(CBD) + Spatial_FE</code>
+            </div>
+            <div class="calc-row">
+              <div>
+                <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px;">Phân vùng Không gian 3 Tầng (Vành đai • Phường mới 2 cấp • Tiểu thị trường)</label>
+                <select id="c-dist" onchange="runCalc()" class="calc-select">
+                  <option value="99.06">UZ1 Lõi VĐ1–2 • P. Giảng Võ / Ngọc Hà / Ba Đình (Ba Đình: 99.06 tr/m²)</option>
+                  <option value="83.39">UZ2 Nội đô VĐ2–3 • P. Cầu Giấy / Yên Hòa / Nghĩa Đô (Cầu Giấy: 83.39 tr/m²)</option>
+                  <option value="81.55">UZ3 Tây VĐ3–3.5 • P. Phú Diễn / Xuân Đỉnh / Đông Ngạc (Bắc Từ Liêm: 81.55 tr/m²)</option>
+                  <option value="81.27" selected>UZ2 Nội đô VĐ2–3 • P. Thanh Xuân / Nhân Chính / Khương Đình (Thanh Xuân: 81.27 tr/m²)</option>
+                  <option value="78.75">UZ1 Lõi VĐ1–2 • P. Láng / Ô Chợ Dừa / Đống Đa (Đống Đa: 78.75 tr/m²)</option>
+                  <option value="76.68">UZ3 Tây VĐ3–3.5 • P. Từ Liêm / Tây Mỗ / Mễ Trì (Nam Từ Liêm: 76.68 tr/m²)</option>
+                  <option value="59.33">UZ4 Tây Nam VĐ3.5–4 • P. Hà Đông / Dương Nội / Kiến Hưng (Hà Đông: 59.33 tr/m²)</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px;">Diện tích: <strong id="c-area-lbl" style="color:#ffffff;">90 m²</strong></label>
+                <input type="range" id="c-area" min="45" max="150" value="90" oninput="runCalc()" class="calc-range" style="margin-top:8px;" />
+              </div>
+            </div>
+            <div style="margin-top:12px;">
+              <label style="font-size:12px;color:#94a3b8;display:block;margin-bottom:4px;">Cự ly đi bộ mạng lưới (GIS Network): <strong id="c-walk-lbl" style="color:#34d399;">750 m</strong></label>
+              <input type="range" id="c-walk" min="100" max="2000" step="50" value="750" oninput="runCalc()" class="calc-range" />
+            </div>
+            <div style="margin-top:12px;padding:12px;border-radius:14px;background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.35);">
+              <div style="font-size:12px;color:#6ee7b7;font-weight:700;" id="c-zone">VÀNH ĐAI ĐI BỘ TỐI ƯU 500–1.000M (β = +0.0383*** → +3.91%)</div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;">
+                <div>
+                  <div style="font-size:12px;color:#94a3b8;">Giá trị căn hộ ước tính</div>
+                  <div style="font-size:19px;font-weight:800;color:#ffffff;" id="c-total">7.60 Tỷ VNĐ</div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-size:12px;color:#94a3b8;">Giá trị gia tăng nhờ Metro</div>
+                  <div style="font-size:16px;font-weight:800;color:#34d399;" id="c-prem">+286.0 Triệu VNĐ</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+        runCalc();
+      } else {
+        badge.textContent = 'BÁO CÁO KẾT QUẢ THỰC NGHIỆM ĐA TẦNG (N = 16.471 QUAN SÁT)';
+        const t = state.activeSummaryTab;
+
+        let tabBody = '';
+        if (t === 'ols') {
+          tabBody = `
+            <div style="font-size:12px;color:#cbd5e1;font-weight:700;">Bảng 2: Hệ thống Mô hình Hedonic Đa Tầng (OLS HC3) — Biến phụ thuộc: ln(Giá/m²)</div>
+            <div class="ds-table-wrap">
+              <table class="ds-table">
+                <thead>
+                  <tr>
+                    <th>Biến giải thích</th>
+                    <th>MH 2: Chưa KS</th>
+                    <th>MH 3 (Chính): Vành đai + CBD</th>
+                    <th>MH 4: 7 Tiểu thị trường</th>
+                    <th>MH 5: 21 Phường mới (2 cấp)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Hệ số chặn (const)</td>
+                    <td>4.3856***<span class="se-sub">(0.0089)</span></td>
+                    <td><strong>4.5658***</strong><span class="se-sub">(0.0194)</span></td>
+                    <td><strong>4.5520***</strong><span class="se-sub">(0.0140)</span></td>
+                    <td><strong>4.6468***</strong><span class="se-sub">(0.0349)</span></td>
+                  </tr>
+                  <tr>
+                    <td>Vành đai &lt; 500m</td>
+                    <td>-0.0828***<span class="se-sub">(0.0077)</span></td>
+                    <td><strong>0.0030 (ns)</strong><span class="se-sub">(0.0069)</span></td>
+                    <td><strong>0.0041 (ns)</strong><span class="se-sub">(0.0069)</span></td>
+                    <td><strong>0.0018 (ns)</strong><span class="se-sub">(0.0083)</span></td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <td>Vành đai 500–1000m</td>
+                    <td>-0.0073 (ns)<span class="se-sub">(0.0052)</span></td>
+                    <td><strong>0.0354***</strong><span class="se-sub">(0.0048) → +3.61%</span></td>
+                    <td><strong>0.0383***</strong><span class="se-sub">(0.0048) → +3.91%</span></td>
+                    <td><strong>0.0366***</strong><span class="se-sub">(0.0063) → +3.73%</span></td>
+                  </tr>
+                  <tr>
+                    <td>Vành đai 1000–1500m</td>
+                    <td>-0.0134**<span class="se-sub">(0.0060)</span></td>
+                    <td><strong>-0.0015 (ns)</strong><span class="se-sub">(0.0056)</span></td>
+                    <td><strong>0.0002 (ns)</strong><span class="se-sub">(0.0057)</span></td>
+                    <td><strong>0.0001 (ns)</strong><span class="se-sub">(0.0067)</span></td>
+                  </tr>
+                  <tr>
+                    <td>Diện tích (area_m2)</td>
+                    <td>0.0003**<span class="se-sub">(0.0002)</span></td>
+                    <td><strong>0.0009***</strong><span class="se-sub">(0.0001)</span></td>
+                    <td><strong>0.0009***</strong><span class="se-sub">(0.0001)</span></td>
+                    <td><strong>0.0009***</strong><span class="se-sub">(0.0001)</span></td>
+                  </tr>
+                  <tr>
+                    <td>Số phòng ngủ (bedrooms)</td>
+                    <td>-0.0300***<span class="se-sub">(0.0048)</span></td>
+                    <td><strong>-0.0391***</strong><span class="se-sub">(0.0042)</span></td>
+                    <td><strong>-0.0389***</strong><span class="se-sub">(0.0042)</span></td>
+                    <td><strong>-0.0388***</strong><span class="se-sub">(0.0042)</span></td>
+                  </tr>
+                  <tr>
+                    <td>Khoảng cách CBD (ln_cbd)</td>
+                    <td>Không</td>
+                    <td><strong>-0.0522***</strong><span class="se-sub">(0.0125)</span></td>
+                    <td>Không</td>
+                    <td><strong>-0.0595***</strong><span class="se-sub">(0.0208)</span></td>
+                  </tr>
+                  <tr>
+                    <td>Kiểm soát Không gian (FE)</td>
+                    <td>Không</td>
+                    <td><strong>4 Vành đai Đô thị</strong></td>
+                    <td><strong>7 Tiểu thị trường</strong></td>
+                    <td><strong>21 Phường mới (2 cấp)</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Cỡ mẫu (N) / R²</td>
+                    <td>16.471<span class="se-sub">R² = 0.0120</span></td>
+                    <td><strong>16.471</strong><span class="se-sub"><strong>R² = 0.2470</strong></span></td>
+                    <td><strong>16.471</strong><span class="se-sub"><strong>R² = 0.2492</strong></span></td>
+                    <td><strong>16.471</strong><span class="se-sub"><strong>R² = 0.2500</strong></span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="font-size:11.5px;color:#94a3b8;margin-top:5px;">
+              *Ghi chú: *** p &lt; 0.01; ** p &lt; 0.05; ns: không có ý nghĩa thống kê. Kiểm định độ nhạy <strong>MH 6 (Định vị chính xác tòa nhà project_exact, N = 10.521)</strong>: β(500–1000m) = <strong>0.0383*** (SE = 0.0060 → +3.90%, R² = 0.2530)</strong>. Max VIF (MH 3) = <strong>3.238 &lt; 5.0</strong>. Moran's I giảm từ 0.8140 (p &lt; 0.001) xuống <strong>0.0488 (p = 0.2816, ns)</strong> ở MH 3 và <strong>-0.0393 (p = 0.5243, ns)</strong> ở MH 5.
+            </div>
+          `;
+        } else if (t === 'districts') {
+          tabBody = `
+            <div style="font-size:12px;color:#cbd5e1;font-weight:700;">Bảng 1: Ánh xạ Không gian 3 Tầng — 4 Vành Đai Đô Thị • 21 Phường Mới (2 Cấp) • 7 Tiểu Thị Trường (N = 16.471)</div>
+            <div class="ds-table-wrap">
+              <table class="ds-table">
+                <thead>
+                  <tr>
+                    <th>Tiểu thị trường lịch sử (Quận cũ)</th>
+                    <th>Phân vùng Vành đai Đô thị</th>
+                    <th>Phường mới trực thuộc TP. Hà Nội (Chính quyền 2 cấp)</th>
+                    <th>N (%)</th>
+                    <th>Mean ± SD (tr/m²)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Ba Đình</strong></td>
+                    <td>UZ1: Lõi VĐ1–2</td>
+                    <td>P. Giảng Võ (W01), P. Ngọc Hà (W02), P. Ba Đình (W03)</td>
+                    <td>420 (2.5%)</td>
+                    <td>99.06 ± 35.98</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Cầu Giấy</strong></td>
+                    <td>UZ2: Nội đô VĐ2–3</td>
+                    <td>P. Cầu Giấy (W07), P. Yên Hòa (W08), P. Nghĩa Đô (W09)</td>
+                    <td>2.895 (17.6%)</td>
+                    <td>83.39 ± 20.69</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Bắc Từ Liêm</strong></td>
+                    <td>UZ3: Tây VĐ3–3.5</td>
+                    <td>P. Phú Diễn (W13), P. Xuân Đỉnh (W14), P. Đông Ngạc (W15)</td>
+                    <td>1.643 (10.0%)</td>
+                    <td>81.55 ± 18.69</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Thanh Xuân</strong></td>
+                    <td>UZ2: Nội đô VĐ2–3</td>
+                    <td>P. Thanh Xuân (W10), P. Nhân Chính (W11), P. Khương Đình (W12)</td>
+                    <td>2.355 (14.3%)</td>
+                    <td>81.27 ± 16.16</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Đống Đa</strong></td>
+                    <td>UZ1: Lõi VĐ1–2</td>
+                    <td>P. Láng (W04), P. Ô Chợ Dừa (W05), P. Đống Đa (W06)</td>
+                    <td>908 (5.5%)</td>
+                    <td>78.75 ± 25.06</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Nam Từ Liêm</strong></td>
+                    <td>UZ3: Tây VĐ3–3.5</td>
+                    <td>P. Từ Liêm (W16), P. Tây Mỗ (W17), P. Mễ Trì (W18)</td>
+                    <td>4.889 (29.7%)</td>
+                    <td>76.68 ± 17.23</td>
+                  </tr>
+                  <tr>
+                    <td><strong>Hà Đông</strong></td>
+                    <td>UZ4: Tây Nam VĐ3.5–4</td>
+                    <td>P. Hà Đông (W19), P. Dương Nội (W20), P. Kiến Hưng (W21)</td>
+                    <td>3.361 (20.4%)</td>
+                    <td>59.33 ± 13.03</td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <td><strong>TOÀN HÀNH LANG</strong></td>
+                    <td><strong>4 Vành đai (UZ1–UZ4)</strong></td>
+                    <td><strong>21 Phường mới trực thuộc TP. Hà Nội</strong></td>
+                    <td><strong>16.471 (100%)</strong></td>
+                    <td><strong>76.41 ± 19.85</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="insight-box">
+              <strong>Giải quyết bài toán Bỏ cấp Quận/Huyện &amp; MAUP:</strong> Tọa độ GPS <code>(lat, lon)</code> và khoảng cách đi bộ mạng lưới <code>metro_dist_km</code> của N = 16.471 căn hộ là bất biến vật lý. Kỹ thuật <strong>Dual Point-in-Polygon</strong> ánh xạ đồng thời sang 4 Vành đai Đô thị (UZ1: 92.43 tr/m², UZ2: 83.49 tr/m², UZ3: 80.16 tr/m², UZ4: 60.09 tr/m²), 21 Phường mới 2 cấp và 7 Tiểu thị trường lịch sử mà không cần thu thập lại dữ liệu gốc.
+            </div>
+          `;
+        } else {
+          tabBody = `
+            <div style="font-size:12px;color:#cbd5e1;font-weight:700;">Quy trình Xử lý Không gian 3 Tầng (Dual Point-in-Polygon) &amp; Đối sánh Học thuật</div>
+            <div class="ds-table-wrap">
+              <table class="ds-table">
+                <thead>
+                  <tr>
+                    <th>Tiêu chí</th>
+                    <th>Trương Thị Mỹ Thanh (2026)</th>
+                    <th>Đóng góp của Nghiên cứu này (2026)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Đo khoảng cách</td>
+                    <td>Đường chim bay (Euclidean)</td>
+                    <td><strong>Mạng lưới đi bộ GIS (Circuity γ = 1.32)</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Dạng hàm cự ly</td>
+                    <td>Tuyến tính đơn điệu</td>
+                    <td><strong>Phi tuyến (Chữ U ngược: đỉnh 500–1000m)</strong></td>
+                  </tr>
+                  <tr class="highlight-row">
+                    <td>Thích ứng Chính quyền 2 cấp</td>
+                    <td>Phụ thuộc cấp Quận cũ</td>
+                    <td><strong>Kiến trúc 3 Tầng (4 Vành đai • 21 Phường mới • 7 Tiểu thị trường)</strong></td>
+                  </tr>
+                  <tr>
+                    <td>Chẩn đoán Không gian</td>
+                    <td>OLS tiêu chuẩn</td>
+                    <td><strong>HC3 + VIF (&le; 3.24) + Moran's I + Exact GPS (N=10.521)</strong></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="insight-box">
+              <strong>Vì sao không chỉ dùng biến giả Phường mới làm mô hình duy nhất?</strong><br/>
+              Theo lý thuyết <em>Modifiable Areal Unit Problem (MAUP — Openshaw, 1984)</em> và cảnh báo kinh tế lượng về <em>Over-controlling</em>, diện tích một phường nội đô rất nhỏ (bán kính 500–1.500m), trùng với bán kính đi bộ tới ga Metro. Do đó, nghiên cứu dùng <strong>Mô hình 3 (4 Phân vùng Vành đai Đô thị + ln_CBD)</strong> làm Mô hình Chính (VIF = 1.05–3.24 &lt; 5.0), kết hợp đối chứng với <strong>Mô hình 4 (7 Tiểu thị trường lịch sử)</strong> và <strong>Mô hình 5 (21 Phường mới Chính quyền 2 cấp)</strong>.
+            </div>
+          `;
+        }
+
+        content.innerHTML = `
+          <div>
+            <div class="ds-tabs">
+              <button onclick="switchSummaryTab('ols')" class="ds-tab ${t === 'ols' ? 'active' : ''}">Bảng 2: Hồi Quy Đa Tầng (M2–M6)</button>
+              <button onclick="switchSummaryTab('districts')" class="ds-tab ${t === 'districts' ? 'active' : ''}">Bảng 1: Ánh Xạ 3 Tầng</button>
+              <button onclick="switchSummaryTab('method')" class="ds-tab ${t === 'method' ? 'active' : ''}">Chính Quyền 2 Cấp &amp; MAUP</button>
+            </div>
+            ${tabBody}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <button onclick="setStep(2); closeSheet();" class="chip-btn">🔬 Mô Phỏng Cự Ly 3D</button>
+              <button onclick="setStep(4)" class="chip-btn" style="border-color:rgba(59,130,246,0.5);background:rgba(59,130,246,0.16);color:#93c5fd;">🧮 Mô Hình Định Giá</button>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function runCalc() {
+      const dEl = document.getElementById('c-dist');
+      if (!dEl) return;
+      const base = parseFloat(dEl.value);
+      const area = parseFloat(document.getElementById('c-area').value);
+      const walk = parseFloat(document.getElementById('c-walk').value);
+
+      document.getElementById('c-area-lbl').textContent = `${area} m²`;
+      document.getElementById('c-walk-lbl').textContent = `${walk} m`;
+
+      let pct = 0, zTxt = 'NGOÀI VÙNG ĐI BỘ >1.500M (β = 0.0000 — Nhóm đối chiếu)', zCol = '#fb7185';
+      if (walk < 500) {
+        pct = 0.0041;
+        zTxt = 'VÀNH ĐAI SÁT GA <500M (β = +0.0041, p = 0.415 — Khấu trừ ngoại ứng ồn)';
+        zCol = '#60a5fa';
+      } else if (walk <= 1000) {
+        pct = 0.0391;
+        zTxt = 'VÀNH ĐAI ĐI BỘ TỐI ƯU 500–1.000M (β = +0.0383*** → +3.91%, p < 0.001)';
+        zCol = '#34d399';
+      } else if (walk <= 1500) {
+        pct = 0.0002;
+        zTxt = 'VÀNH ĐAI ĐỆM 1.000–1.500M (β = +0.0002, p = 0.968 — Suy giảm theo cự ly)';
+        zCol = '#fbbf24';
+      }
+
+      const baseTotal = base * area;
+      const premMillion = baseTotal * pct;
+      const finalTotal = (baseTotal + premMillion) / 1000;
+
+      const zEl = document.getElementById('c-zone');
+      zEl.textContent = zTxt;
+      zEl.style.color = zCol;
+      document.getElementById('c-total').textContent = `${finalTotal.toFixed(2)} Tỷ VNĐ`;
+      document.getElementById('c-prem').textContent = `+${premMillion.toFixed(1)} Triệu VNĐ`;
+      document.getElementById('c-prem').style.color = zCol;
+    }
+
+    function focusProject(id) {
+      const p = PROJECTS.find(item => item.id === id);
+      if (!p) return;
+      state.selectedProject = p;
+      // On desktop, offset camera target slightly right so the selected 3D building renders in the open left canvas area clear of the right drawer
+      const desktopOffset = window.innerWidth > 720 ? 5.5 : 0;
+      state.cam.goalTx = p.x + desktopOffset * Math.cos(state.cam.yaw);
+      state.cam.goalTy = 2.0;
+      state.cam.goalTz = p.z + desktopOffset * Math.sin(state.cam.yaw);
+      state.cam.goalDist = 32;
+      state.cam.goalPitch = 0.56;
+      openSheet('project');
+    }
+
+    // =========================================================================
+    // 6. SOLID ARCHITECTURAL 3D ENGINE & COLLISION-FREE LABELS
+    // =========================================================================
+    const canvas = document.getElementById('canvas3d');
+    const ctx = canvas.getContext('2d');
+    let cw = window.innerWidth, ch = window.innerHeight;
+
+    function resizeCanvas() {
+      cw = window.innerWidth;
+      ch = window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = cw * dpr;
+      canvas.height = ch * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    let camPos = { x: 0, y: 40, z: 40 };
+    let camFwd = { x: 0, y: 0, z: -1 };
+    let camRight = { x: 1, y: 0, z: 0 };
+    let camUp = { x: 0, y: 1, z: 0 };
+    let hitBoxes = [];
+    let placedLabels = [];
+
+    function project(wx, wy, wz) {
+      const dx = wx - camPos.x;
+      const dy = wy - camPos.y;
+      const dz = wz - camPos.z;
+      const cz = dx * camFwd.x + dy * camFwd.y + dz * camFwd.z;
+      if (cz <= 1.2) return null;
+      const cx = dx * camRight.x + dy * camRight.y + dz * camRight.z;
+      const cy = dx * camUp.x + dy * camUp.y + dz * camUp.z;
+      const focal = Math.min(cw, ch) * 0.90;
+      return {
+        x: cw * 0.5 + (cx / cz) * focal,
+        y: ch * 0.5 - (cy / cz) * focal,
+        depth: cz
+      };
+    }
+
+    function tryDrawLabel(text, x, y, bgCol, textCol, borderCol, fontStr = 'bold 12px sans-serif') {
+      if (x < 40 || x > cw - 40 || y < 58 || y > ch - 82) return false;
+      ctx.font = fontStr;
+      const padX = 8;
+      const boxH = 22;
+      const boxW = ctx.measureText(text).width + padX * 2;
+      const left = x - boxW * 0.5;
+      const top = y - boxH * 0.5;
+      const right = left + boxW;
+      const bottom = top + boxH;
+
+      // Never draw 3D canvas labels that collide with or get clipped by the open #info-sheet drawer!
+      const sheetEl = document.getElementById('info-sheet');
+      if (sheetEl && !sheetEl.classList.contains('closed')) {
+        const sLeft = cw > 640 ? (cw - 522) : 0;
+        const sTop = cw > 640 ? 96 : (ch * 0.20);
+        if (right > sLeft && bottom > sTop) {
+          return false;
+        }
+      }
+
+      for (const b of placedLabels) {
+        if (left < b.right + 5 && right > b.left - 5 && top < b.bottom + 4 && bottom > b.top - 4) {
+          return false;
+        }
+      }
+      placedLabels.push({ left, right, top, bottom });
+
+      if (bgCol) {
+        ctx.fillStyle = bgCol;
+        ctx.beginPath();
+        ctx.roundRect(left, top, boxW, boxH, 6);
+        ctx.fill();
+        if (borderCol) {
+          ctx.strokeStyle = borderCol;
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
+      }
+      ctx.fillStyle = textCol;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, x, y);
+      return true;
+    }
+
+    function drawOrientedBox3D(wx, wy, wz, tx, tz, lengthT, height, widthN, palette, opts = {}) {
+      const nx = -tz, nz = tx;
+      const hl = lengthT * 0.5;
+      const hw = widthN * 0.5;
+
+      const worldCorners = [
+        { x: wx + tx * hl + nx * hw, z: wz + tz * hl + nz * hw },
+        { x: wx + tx * hl - nx * hw, z: wz + tz * hl - nz * hw },
+        { x: wx - tx * hl - nx * hw, z: wz - tz * hl - nz * hw },
+        { x: wx - tx * hl + nx * hw, z: wz - tz * hl + nz * hw }
+      ];
+
+      const bPts = worldCorners.map(c => project(c.x, wy, c.z));
+      const tPts = worldCorners.map(c => project(c.x, wy + height, c.z));
+      if (bPts.some(p => !p) || tPts.some(p => !p)) return null;
+
+      if (opts.shadow && wy <= 0.05) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+        ctx.beginPath();
+        bPts.forEach((p, idx) => {
+          if (idx === 0) ctx.moveTo(p.x + 5, p.y + 3);
+          else ctx.lineTo(p.x + 5, p.y + 3);
+        });
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      const sideDefs = [
+        { i0: 0, i1: 1, col: palette.front, fnx: tx,  fnz: tz  },
+        { i0: 1, i1: 2, col: palette.right, fnx: -nx, fnz: -nz },
+        { i0: 2, i1: 3, col: palette.back,  fnx: -tx, fnz: -tz },
+        { i0: 3, i1: 0, col: palette.left,  fnx: nx,  fnz: nz  }
+      ].map(sd => {
+        const mx = (worldCorners[sd.i0].x + worldCorners[sd.i1].x) * 0.5;
+        const my = wy + height * 0.5;
+        const mz = (worldCorners[sd.i0].z + worldCorners[sd.i1].z) * 0.5;
+        const vx = mx - camPos.x;
+        const vy = my - camPos.y;
+        const vz = mz - camPos.z;
+        const distSq = vx * vx + vy * vy + vz * vz;
+        const facing = (vx * sd.fnx + vz * sd.fnz) < 0;
+        return { ...sd, distSq, facing };
+      });
+
+      sideDefs.sort((a, b) => b.distSq - a.distSq);
+
+      ctx.lineWidth = opts.highlight ? 2.0 : 0.85;
+      ctx.strokeStyle = opts.highlight ? '#ffffff' : (palette.stroke || 'rgba(255,255,255,0.22)');
+
+      sideDefs.forEach(sd => {
+        if (!sd.facing) return;
+        const bA = bPts[sd.i0], bB = bPts[sd.i1];
+        const tB = tPts[sd.i1], tA = tPts[sd.i0];
+
+        ctx.fillStyle = sd.col;
+        ctx.beginPath();
+        ctx.moveTo(bA.x, bA.y);
+        ctx.lineTo(bB.x, bB.y);
+        ctx.lineTo(tB.x, tB.y);
+        ctx.lineTo(tA.x, tA.y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        if (opts.windows && height >= 3.2 && bA.depth < 72) {
+          ctx.save();
+          ctx.strokeStyle = opts.windowColor || 'rgba(255, 255, 255, 0.30)';
+          ctx.lineWidth = 0.85;
+          const floors = Math.min(9, Math.max(3, Math.floor(height * 0.72)));
+          for (let f = 1; f < floors; f++) {
+            const r = f / floors;
+            const lx = bA.x + (tA.x - bA.x) * r;
+            const ly = bA.y + (tA.y - bA.y) * r;
+            const rx = bB.x + (tB.x - bB.x) * r;
+            const ry = bB.y + (tB.y - bB.y) * r;
+            const ix1 = lx + (rx - lx) * 0.14, iy1 = ly + (ry - ly) * 0.14;
+            const ix2 = lx + (rx - lx) * 0.86, iy2 = ly + (ry - ly) * 0.86;
+            ctx.beginPath();
+            ctx.moveTo(ix1, iy1);
+            ctx.lineTo(ix2, iy2);
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+
+        if (opts.isTrainCar && (sd.i0 === 1 || sd.i0 === 3)) {
+          const wA1x = bA.x + (tA.x - bA.x) * 0.45, wA1y = bA.y + (tA.y - bA.y) * 0.45;
+          const wB1x = bB.x + (tB.x - bB.x) * 0.45, wB1y = bB.y + (tB.y - bB.y) * 0.45;
+          const wA2x = bA.x + (tA.x - bA.x) * 0.80, wA2y = bA.y + (tA.y - bA.y) * 0.80;
+          const wB2x = bB.x + (tB.x - bB.x) * 0.80, wB2y = bB.y + (tB.y - bB.y) * 0.80;
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.moveTo(wA1x, wA1y); ctx.lineTo(wB1x, wB1y);
+          ctx.lineTo(wB2x, wB2y); ctx.lineTo(wA2x, wA2y);
+          ctx.closePath();
+          ctx.fill();
+
+          const sA1x = bA.x + (tA.x - bA.x) * 0.25, sA1y = bA.y + (tA.y - bA.y) * 0.25;
+          const sB1x = bB.x + (tB.x - bB.x) * 0.25, sB1y = bB.y + (tB.y - bB.y) * 0.25;
+          ctx.strokeStyle = opts.liveryColor || '#10b981';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(sA1x, sA1y);
+          ctx.lineTo(sB1x, sB1y);
+          ctx.stroke();
+        }
+      });
+
+      if (camPos.y > wy + height) {
+        ctx.fillStyle = opts.highlight ? '#ffffff' : palette.top;
+        ctx.beginPath();
+        ctx.moveTo(tPts[0].x, tPts[0].y);
+        ctx.lineTo(tPts[1].x, tPts[1].y);
+        ctx.lineTo(tPts[2].x, tPts[2].y);
+        ctx.lineTo(tPts[3].x, tPts[3].y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        if (opts.isTrainCar) {
+          const rA = { x: (tPts[0].x + tPts[1].x) * 0.5, y: (tPts[0].y + tPts[1].y) * 0.5 };
+          const rB = { x: (tPts[3].x + tPts[2].x) * 0.5, y: (tPts[3].y + tPts[2].y) * 0.5 };
+          ctx.strokeStyle = opts.liveryColor || '#10b981';
+          ctx.lineWidth = 2.6;
+          ctx.beginPath();
+          ctx.moveTo(rA.x, rA.y);
+          ctx.lineTo(rB.x, rB.y);
+          ctx.stroke();
+
+          const rcX = (tPts[0].x + tPts[2].x) * 0.5;
+          const rcY = (tPts[0].y + tPts[2].y) * 0.5;
+          ctx.fillStyle = '#334155';
+          ctx.beginPath();
+          ctx.arc(rcX, rcY, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      const roofCenterX = (tPts[0].x + tPts[2].x) * 0.5;
+      const roofCenterY = (tPts[0].y + tPts[2].y) * 0.5;
+      const baseCenterY = (bPts[0].y + bPts[2].y) * 0.5;
+
+      return {
+        x: roofCenterX,
+        y: (roofCenterY + baseCenterY) * 0.5,
+        roofX: roofCenterX,
+        roofY: roofCenterY,
+        r: Math.max(15, Math.hypot(tPts[2].x - bPts[0].x, tPts[2].y - bPts[0].y) * 0.48),
+        depth: (tPts[0].depth + bPts[2].depth) * 0.5
+      };
+    }
+
+    function drawWorldRibbonPolygon(spline, halfWidthWorld, wy, fillCol, strokeCol) {
+      const leftBank = [];
+      const rightBank = [];
+      for (let i = 0; i < spline.length; i++) {
+        const pt = spline[i];
+        const lP = project(pt.x + pt.nx * halfWidthWorld, wy, pt.z + pt.nz * halfWidthWorld);
+        const rP = project(pt.x - pt.nx * halfWidthWorld, wy, pt.z - pt.nz * halfWidthWorld);
+        if (lP && rP) {
+          leftBank.push(lP);
+          rightBank.push(rP);
+        }
+      }
+      if (leftBank.length < 2) return;
+
+      ctx.beginPath();
+      leftBank.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+      for (let i = rightBank.length - 1; i >= 0; i--) {
+        ctx.lineTo(rightBank[i].x, rightBank[i].y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = fillCol;
+      ctx.fill();
+      if (strokeCol) {
+        ctx.strokeStyle = strokeCol;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+    }
+
+    function drawGroundPolyline(pts, wy, color, widthPx, casingColor = null, dash = []) {
+      const screenPts = [];
+      for (let i = 0; i < pts.length; i++) {
+        const sp = project(pts[i].x, wy, pts[i].z);
+        if (sp) screenPts.push(sp);
+      }
+      if (screenPts.length < 2) return;
+
+      ctx.save();
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      if (dash.length) ctx.setLineDash(dash);
+
+      if (casingColor) {
+        ctx.strokeStyle = casingColor;
+        ctx.lineWidth = widthPx + 2.0;
+        ctx.beginPath();
+        screenPts.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+        ctx.stroke();
+      }
+      ctx.strokeStyle = color;
+      ctx.lineWidth = widthPx;
+      ctx.beginPath();
+      screenPts.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawGroundEllipse(wx, wy, wz, rx, rz, fillStyle, strokeStyle = null, lineWidth = 1.2) {
+      const segs = 32;
+      ctx.beginPath();
+      let started = false;
+      for (let i = 0; i <= segs; i++) {
+        const a = (i / segs) * Math.PI * 2;
+        const p = project(wx + Math.cos(a) * rx, wy, wz + Math.sin(a) * rz);
+        if (p) {
+          if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+          else ctx.lineTo(p.x, p.y);
+        }
+      }
+      if (!started) return;
+      ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      if (strokeStyle) { ctx.strokeStyle = strokeStyle; ctx.lineWidth = lineWidth; ctx.stroke(); }
+    }
+
+    function sampleSpline(spline, prog) {
+      const total = spline.length - 1;
+      const exact = Math.max(0, Math.min(total - 0.001, prog * total));
+      const idx = Math.floor(exact);
+      const frac = exact - idx;
+      const a = spline[idx], b = spline[idx + 1];
+      return {
+        x: a.x + (b.x - a.x) * frac,
+        y: a.elev + (b.elev - a.elev) * frac,
+        z: a.z + (b.z - a.z) * frac,
+        tx: a.tx, tz: a.tz,
+        nx: a.nx, nz: a.nz
+      };
+    }
+
+    const TOWER_PALETTES = {
+      SWEET: { top: '#6ee7b7', front: '#10b981', right: '#059669', back: '#047857', left: '#0d9488', stroke: 'rgba(167, 243, 208, 0.55)' },
+      NEAR:  { top: '#93c5fd', front: '#3b82f6', right: '#2563eb', back: '#1d4ed8', left: '#0284c7', stroke: 'rgba(191, 219, 254, 0.55)' },
+      BUFFER:{ top: '#fcd34d', front: '#f59e0b', right: '#d97706', back: '#b45309', left: '#ea580c', stroke: 'rgba(253, 230, 138, 0.5)' },
+      FAR:   { top: '#fda4af', front: '#f43f5e', right: '#e11d48', back: '#be123c', left: '#db2777', stroke: 'rgba(254, 205, 211, 0.5)' },
+      BASE:  { top: '#64748b', front: '#475569', right: '#334155', back: '#1e293b', left: '#334155', stroke: 'rgba(148, 163, 184, 0.4)' },
+      GOLD:  { top: '#fde68a', front: '#10b981', right: '#059669', back: '#047857', left: '#34d399', stroke: '#fef08a' }
+    };
+
+    function drawTree3D(wx, wz) {
+      const pBase = project(wx, 0, wz);
+      const pTop = project(wx, 1.35, wz);
+      if (!pBase || !pTop || pBase.depth > 55) return;
+      const r = Math.max(3.5, 130 / pTop.depth);
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = Math.max(1.5, 50 / pBase.depth);
+      ctx.beginPath();
+      ctx.moveTo(pBase.x, pBase.y);
+      ctx.lineTo(pTop.x, pTop.y);
+      ctx.stroke();
+
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(pTop.x, pTop.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#34d399';
+      ctx.beginPath();
+      ctx.arc(pTop.x - r * 0.25, pTop.y - r * 0.25, r * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // =========================================================================
+    // 7. MAIN 60FPS RENDER LOOP
+    // =========================================================================
+    function render() {
+      state.time += 0.016;
+      hitBoxes = [];
+      placedLabels = [];
+      const isOSM = state.mapTheme === 'osm';
+
+      state.trains.forEach(tr => {
+        tr.prog += tr.dir * tr.speed;
+        if (tr.prog >= 0.96) { tr.prog = 0.96; tr.dir = -1; }
+        if (tr.prog <= 0.04) { tr.prog = 0.04; tr.dir = 1; }
+      });
+
+      const c = state.cam;
+      if (state.followTrain) {
+        const tp = sampleSpline(LINE_2A_SPLINE, state.trains[0].prog);
+        c.goalTx = tp.x; c.goalTy = tp.y + 1.2; c.goalTz = tp.z;
+        c.goalDist = 22; c.goalPitch = 0.42;
+        c.goalYaw += 0.0025;
+      }
+
+      c.tx += (c.goalTx - c.tx) * 0.085;
+      c.ty += (c.goalTy - c.ty) * 0.085;
+      c.tz += (c.goalTz - c.tz) * 0.085;
+      c.yaw += (c.goalYaw - c.yaw) * 0.085;
+      c.pitch = Math.max(0.24, Math.min(1.35, c.pitch + (c.goalPitch - c.pitch) * 0.085));
+      c.dist = Math.max(15, Math.min(145, c.dist + (c.goalDist - c.dist) * 0.085));
+
+      camPos.x = c.tx - Math.sin(c.yaw) * Math.cos(c.pitch) * c.dist;
+      camPos.y = c.ty + Math.sin(c.pitch) * c.dist;
+      camPos.z = c.tz + Math.cos(c.yaw) * Math.cos(c.pitch) * c.dist;
+
+      const fx = c.tx - camPos.x, fy = c.ty - camPos.y, fz = c.tz - camPos.z;
+      const fl = Math.hypot(fx, fy, fz) || 1;
+      camFwd = { x: fx / fl, y: fy / fl, z: fz / fl };
+      const rl = Math.hypot(-camFwd.z, 0, camFwd.x) || 1;
+      camRight = { x: -camFwd.z / rl, y: 0, z: camFwd.x / rl };
+      camUp = {
+        x: camRight.y * camFwd.z - camRight.z * camFwd.y,
+        y: camRight.z * camFwd.x - camRight.x * camFwd.z,
+        z: camRight.x * camFwd.y - camRight.y * camFwd.x
+      };
+
+      // 1. BACKGROUND SKY / SURFACE
+      if (isOSM) {
+        ctx.fillStyle = '#f2efe9';
+        ctx.fillRect(0, 0, cw, ch);
+      } else {
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, ch);
+        bgGrad.addColorStop(0, '#040914');
+        bgGrad.addColorStop(0.5, '#091526');
+        bgGrad.addColorStop(1, '#0d1f36');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, cw, ch);
+      }
+
+      // 2. SUBTLE WGS84 COORDINATE GRID
+      ctx.strokeStyle = isOSM ? 'rgba(148, 163, 184, 0.2)' : 'rgba(56, 189, 248, 0.06)';
+      ctx.lineWidth = 1;
+      for (let g = -80; g <= 80; g += 8) {
+        const p1 = project(g, 0, -80), p2 = project(g, 0, 80);
+        if (p1 && p2) { ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); }
+        const q1 = project(-80, 0, g), q2 = project(80, 0, g);
+        if (q1 && q2) { ctx.beginPath(); ctx.moveTo(q1.x, q1.y); ctx.lineTo(q2.x, q2.y); ctx.stroke(); }
+      }
+
+      // 3. GREEN PARKS
+      const parkFill = isOSM ? '#c8facc' : 'rgba(16, 185, 129, 0.10)';
+      const parkStroke = isOSM ? '#86efac' : 'rgba(16, 185, 129, 0.25)';
+      HANOI_PARKS.forEach(pk => {
+        drawGroundEllipse(pk.x, 0.02, pk.z, pk.rx, pk.rz, parkFill, parkStroke);
+      });
+
+      // 4. RIVERS & LAKES
+      const waterFill = isOSM ? '#aad3df' : 'rgba(14, 165, 233, 0.26)';
+      const waterStroke = isOSM ? '#7ab8cc' : 'rgba(56, 189, 248, 0.45)';
+
+      drawWorldRibbonPolygon(RED_RIVER_SPLINE, 2.8, 0.03, waterFill, waterStroke);
+      drawWorldRibbonPolygon(TO_LICH_RIVER, 0.22, 0.03, waterFill, null);
+      drawWorldRibbonPolygon(NHUE_RIVER, 0.30, 0.03, waterFill, null);
+      drawWorldRibbonPolygon(DAY_RIVER, 0.35, 0.03, waterFill, null);
+
+      ctx.beginPath();
+      let htStart = false;
+      HO_TAY_POLY.forEach(wPt => {
+        const sp = project(wPt.x, 0.04, wPt.z);
+        if (sp) { if (!htStart) { ctx.moveTo(sp.x, sp.y); htStart = true; } else ctx.lineTo(sp.x, sp.y); }
+      });
+      if (htStart) {
+        ctx.closePath();
+        ctx.fillStyle = waterFill; ctx.fill();
+        ctx.strokeStyle = waterStroke; ctx.lineWidth = 1.4; ctx.stroke();
+      }
+
+      HANOI_LAKES.forEach(lk => {
+        drawGroundEllipse(lk.x, 0.04, lk.z, lk.rx, lk.rz, waterFill, waterStroke);
+      });
+
+      // 5. OPENSTREETMAP / GOOGLE EARTH ROAD NETWORK
+      OSM_ROADS.forEach(rd => {
+        if (rd.type === 'motorway') {
+          drawGroundPolyline(rd.pts, 0.06, isOSM ? '#f9b29c' : 'rgba(245, 158, 11, 0.42)', 4.2, isOSM ? '#e07a5f' : 'rgba(251, 191, 36, 0.2)');
+        } else if (rd.type === 'primary') {
+          drawGroundPolyline(rd.pts, 0.05, isOSM ? '#fcd6a4' : 'rgba(148, 163, 184, 0.28)', 3.0, isOSM ? '#dfb070' : null);
+        } else {
+          drawGroundPolyline(rd.pts, 0.04, isOSM ? '#ffffff' : 'rgba(100, 116, 139, 0.22)', 2.0, isOSM ? '#cbd5e1' : null);
+        }
+      });
+
+      // 6. TOD ZONES & NUISANCE BUFFER RINGS AROUND ACTIVE STATION
+      const activeProj = state.selectedProject || PROJECTS[0];
+      if (activeProj) {
+        drawGroundEllipse(activeProj.sx, 0.08, activeProj.sz, 8.2, 8.2, 'rgba(16, 185, 129, 0.14)', '#10b981', 1.8);
+        drawGroundEllipse(activeProj.sx, 0.09, activeProj.sz, 4.1, 4.1, 'rgba(244, 63, 94, 0.12)', '#f43f5e', 1.5);
+
+        const wavePhase = (state.time * 1.4) % 1;
+        const waveR = 0.8 + wavePhase * 3.3;
+        drawGroundEllipse(
+          activeProj.sx, 0.12, activeProj.sz,
+          waveR, waveR,
+          null,
+          `rgba(251, 113, 133, ${(1 - wavePhase) * 0.75})`,
+          2.0
+        );
+      }
+
+      // 7. 3D CURVED METRO VIADUCTS
+      function drawViaduct3D(spline, mainColor) {
+        drawGroundPolyline(spline, 0.09, 'rgba(0, 0, 0, 0.30)', 5.0);
+
+        for (let i = 0; i < spline.length; i += 3) {
+          const pt = spline[i];
+          if (pt.elev <= 0.6) continue;
+          const gP = project(pt.x, 0, pt.z);
+          const tP = project(pt.x, pt.elev, pt.z);
+          if (gP && tP) {
+            ctx.strokeStyle = isOSM ? '#64748b' : 'rgba(148, 163, 184, 0.72)';
+            ctx.lineWidth = Math.max(1.6, 120 / tP.depth);
+            ctx.beginPath();
+            ctx.moveTo(gP.x, gP.y);
+            ctx.lineTo(tP.x, tP.y);
+            ctx.stroke();
+          }
+        }
+
+        const elevPts = [];
+        const underPts = [];
+        spline.forEach(pt => {
+          const sp = project(pt.x, pt.elev, pt.z);
+          if (!sp) return;
+          if (pt.elev > 0.6) elevPts.push(sp);
+          else underPts.push(sp);
+        });
+
+        if (elevPts.length > 1) {
+          ctx.save();
+          ctx.lineJoin = 'round';
+          ctx.lineCap = 'round';
+
+          ctx.strokeStyle = isOSM ? '#475569' : '#1e293b';
+          ctx.lineWidth = 6.5;
+          ctx.beginPath();
+          elevPts.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+          ctx.stroke();
+
+          ctx.strokeStyle = mainColor;
+          ctx.lineWidth = 3.8;
+          ctx.beginPath();
+          elevPts.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+          ctx.stroke();
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+          ctx.lineWidth = 1.0;
+          ctx.beginPath();
+          elevPts.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (underPts.length > 1) {
+          ctx.save();
+          ctx.strokeStyle = mainColor;
+          ctx.lineWidth = 3.0;
+          ctx.setLineDash([5, 4]);
+          ctx.beginPath();
+          underPts.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      drawViaduct3D(LINE_2A_SPLINE, '#10b981');
+      drawViaduct3D(LINE_3_SPLINE, '#3b82f6');
+
+      // 8. DEPTH-SORTED 3D OBJECTS
+      const renderQueue = [];
+      const pendingLabels = [];
+
+      // 8A. Green Buffer inside 500m-1000m Sweet Spot
+      if (activeProj) {
+        for (let a = 0; a < Math.PI * 2; a += Math.PI / 5) {
+          const tx = activeProj.sx + Math.cos(a) * 4.6;
+          const tz = activeProj.sz + Math.sin(a) * 4.6;
+          const pt = project(tx, 0.6, tz);
+          if (pt) {
+            renderQueue.push({
+              depth: pt.depth,
+              draw: () => drawTree3D(tx, tz)
+            });
+          }
+        }
+      }
+
+      // 8B. Background Urban Fabric Towers
+      URBAN_BLOCKS.forEach(b => {
+        if (state.step === 2 && Math.hypot(b.x - activeProj.sx, b.z - activeProj.sz) < 12) return;
+        const pt = project(b.x, b.h * 0.5, b.z);
+        if (!pt) return;
+        const pal = isOSM
+          ? { top: '#e2e8f0', front: '#cbd5e1', right: '#94a3b8', back: '#64748b', left: '#94a3b8', stroke: 'rgba(100,116,139,0.35)' }
+          : (b.zone === 'SWEET'
+            ? { top: '#059669', front: '#047857', right: '#065f46', back: '#064e3b', left: '#065f46', stroke: 'rgba(52,211,153,0.28)' }
+            : { top: '#334155', front: '#1e293b', right: '#0f172a', back: '#090d16', left: '#1e293b', stroke: 'rgba(148,163,184,0.2)' });
+
+        renderQueue.push({
+          depth: pt.depth,
+          draw: () => drawOrientedBox3D(b.x, 0, b.z, 1, 0, b.w, b.h, b.w, pal, { shadow: true, windows: true, windowColor: isOSM ? 'rgba(71,85,105,0.25)' : 'rgba(148,163,184,0.18)' })
+        });
+      });
+
+      // 8C. 23 Oriented 3D Metro Stations
+      STATIONS.forEach(st => {
+        const pt = project(st.x, st.elev, st.z);
+        if (!pt) return;
+        const pal = st.line === '2A'
+          ? { top: '#1e293b', front: '#065f46', right: '#0f172a', back: '#065f46', left: '#0f172a', stroke: '#34d399' }
+          : { top: '#1e293b', front: '#1e40af', right: '#0f172a', back: '#1e40af', left: '#0f172a', stroke: '#60a5fa' };
+
+        renderQueue.push({
+          depth: pt.depth - 0.6,
+          draw: () => {
+            const box = drawOrientedBox3D(st.x, st.elev - 0.32, st.z, st.tx, st.tz, 2.35, 0.78, 1.28, pal, { highlight: false });
+            if (!box) return;
+            hitBoxes.push({ x: box.x, y: box.y, r: box.r + 5, depth: box.depth, type: 'station', data: st });
+
+            ctx.fillStyle = st.line === '2A' ? '#10b981' : '#3b82f6';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(box.roofX, box.roofY - 3, 4.0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            if (st.major) {
+              pendingLabels.push({
+                priority: 4,
+                text: st.name,
+                x: box.roofX,
+                y: box.roofY - 16,
+                bg: isOSM ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,42,0.88)',
+                fg: isOSM ? '#0f172a' : '#f8fafc',
+                border: st.line === '2A' ? 'rgba(16,185,129,0.6)' : 'rgba(59,130,246,0.6)',
+                font: '600 12px sans-serif'
+              });
+            }
+          }
+        });
+      });
+
+      // 8D. Streamlined 4-Car Articulated 3D Metro Trains
+      state.trains.forEach(tr => {
+        const spline = tr.line === '2A' ? LINE_2A_SPLINE : LINE_3_SPLINE;
+        const trainPal = tr.line === '2A'
+          ? { top: '#ffffff', front: '#059669', right: '#f1f5f9', back: '#059669', left: '#ffffff', stroke: '#10b981' }
+          : { top: '#ffffff', front: '#2563eb', right: '#f1f5f9', back: '#2563eb', left: '#ffffff', stroke: '#3b82f6' };
+
+        for (let car = -1.5; car <= 1.5; car += 1.0) {
+          const pCar = Math.max(0.01, Math.min(0.99, tr.prog + car * 0.022));
+          const pos = sampleSpline(spline, pCar);
+          const pt = project(pos.x, pos.y + 0.5, pos.z);
+          if (!pt) continue;
+
+          const isLeadCar = (tr.dir > 0 && car === 1.5) || (tr.dir < 0 && car === -1.5);
+
+          renderQueue.push({
+            depth: pt.depth - 1.2,
+            draw: () => {
+              drawOrientedBox3D(pos.x, pos.y + 0.16, pos.z, pos.tx, pos.tz, 1.32, 0.70, 0.78, trainPal, {
+                highlight: false,
+                isTrainCar: true,
+                liveryColor: tr.color
+              });
+
+              if (isLeadCar) {
+                const dirSign = tr.dir > 0 ? 1 : -1;
+                const h1 = project(pos.x + pos.tx * dirSign * 0.75, pos.y + 0.42, pos.z + pos.tz * dirSign * 0.75);
+                const h2 = project(pos.x + pos.tx * dirSign * 3.4 + pos.nx * 0.85, pos.y + 0.2, pos.z + pos.tz * dirSign * 3.4 + pos.nz * 0.85);
+                const h3 = project(pos.x + pos.tx * dirSign * 3.4 - pos.nx * 0.85, pos.y + 0.2, pos.z + pos.tz * dirSign * 3.4 - pos.nz * 0.85);
+                if (h1 && h2 && h3) {
+                  ctx.fillStyle = 'rgba(254, 240, 138, 0.38)';
+                  ctx.beginPath();
+                  ctx.moveTo(h1.x, h1.y);
+                  ctx.lineTo(h2.x, h2.y);
+                  ctx.lineTo(h3.x, h3.y);
+                  ctx.closePath();
+                  ctx.fill();
+                }
+              }
+            }
+          });
+        }
+      });
+
+      // 8E. Featured Architectural 3D Apartment Complexes (With Sample Size n & District FE Normalizer)
+      PROJECTS.forEach(p => {
+        if (state.step === 2 && p.id === activeProj.id) return;
+        const isSel = state.selectedProject && state.selectedProject.id === p.id;
+
+        const baseH = (state.step === 3 && state.proofView === 'bonus')
+          ? 4.2
+          : 4.5 + Math.min(6.8, (p.price - 42) * 0.095);
+
+        const bonusH = p.zone === 'SWEET' ? 3.2 : (p.zone === 'NEAR' ? 0.55 : 0.15);
+        const totalH = (state.step === 3 && state.proofView === 'bonus') ? (baseH + bonusH) : baseH;
+
+        const pt = project(p.x, totalH * 0.5, p.z);
+        if (!pt) return;
+
+        const pal = TOWER_PALETTES[p.zone] || TOWER_PALETTES.FAR;
+
+        renderQueue.push({
+          depth: pt.depth - 0.9,
+          draw: () => {
+            if (state.step === 3 && state.proofView === 'bonus') {
+              drawOrientedBox3D(p.x, 0, p.z, 1, 0, 1.8, baseH, 1.8, TOWER_PALETTES.BASE, { shadow: true, windows: true });
+              const topBox = drawOrientedBox3D(p.x, baseH, p.z, 1, 0, 1.85, bonusH, 1.85, pal, { highlight: isSel || p.zone === 'SWEET' });
+              if (!topBox) return;
+              hitBoxes.push({ x: topBox.x, y: topBox.y, r: topBox.r + 8, depth: topBox.depth, type: 'project', data: p });
+
+              if (isSel || p.zone === 'SWEET' || topBox.depth < 52) {
+                const bTxt = p.zone === 'SWEET' ? `+3.91%*** • ${p.name.split(' (')[0]} (n=${p.nObs})` : (p.zone === 'NEAR' ? `+0.41% ns • ${p.name.split(' (')[0]}` : `0.00% • ${p.name.split(' (')[0]}`);
+                pendingLabels.push({
+                  priority: isSel ? 1 : 2,
+                  text: bTxt,
+                  x: topBox.roofX,
+                  y: topBox.roofY - 14,
+                  bg: p.zone === 'SWEET' ? '#10b981' : 'rgba(15, 23, 42, 0.92)',
+                  fg: p.zone === 'SWEET' ? '#022c22' : '#ffffff',
+                  border: pal.front,
+                  font: 'bold 12px sans-serif'
+                });
+              }
+            } else if (p.twin) {
+              drawOrientedBox3D(p.x, 0, p.z, 1, 0, 2.8, 1.05, 1.9, pal, { shadow: true });
+              drawOrientedBox3D(p.x - 0.65, 1.05, p.z, 1, 0, 1.15, (totalH - 1.05) * 0.86, 1.35, pal, {
+                highlight: isSel,
+                windows: true,
+                windowColor: 'rgba(255, 255, 255, 0.36)'
+              });
+              const box = drawOrientedBox3D(p.x + 0.65, 1.05, p.z, 1, 0, 1.25, totalH - 1.05, 1.45, pal, {
+                highlight: isSel,
+                windows: true,
+                windowColor: 'rgba(255, 255, 255, 0.42)'
+              });
+              if (!box) return;
+              const crown = drawOrientedBox3D(p.x + 0.65, totalH, p.z, 1, 0, 0.85, 0.55, 0.95, pal, { highlight: isSel });
+              const topX = crown ? crown.roofX : box.roofX;
+              const topY = crown ? crown.roofY : box.roofY;
+
+              hitBoxes.push({ x: box.x, y: box.y, r: box.r + 8, depth: box.depth, type: 'project', data: p });
+
+              if (isSel || box.depth < 62) {
+                pendingLabels.push({
+                  priority: isSel ? 1 : 2,
+                  text: isSel ? `★ ${p.name.split(' (')[0]} • ${p.price}tr (n=${p.nObs})` : `${p.name.split(' (')[0]} (${p.price}tr • n=${p.nObs})`,
+                  x: topX,
+                  y: topY - 14,
+                  bg: isSel ? '#10b981' : 'rgba(15, 23, 42, 0.92)',
+                  fg: isSel ? '#022c22' : '#ffffff',
+                  border: isSel ? '#ffffff' : pal.front,
+                  font: isSel ? 'bold 12px sans-serif' : '600 12px sans-serif'
+                });
+              }
+            } else {
+              drawOrientedBox3D(p.x, 0, p.z, 1, 0, 2.2, 1.05, 2.2, pal, { shadow: true });
+              const box = drawOrientedBox3D(p.x, 1.05, p.z, 1, 0, 1.65, totalH - 1.05, 1.65, pal, {
+                highlight: isSel,
+                windows: true,
+                windowColor: 'rgba(255, 255, 255, 0.40)'
+              });
+              if (!box) return;
+              const crown = drawOrientedBox3D(p.x, totalH, p.z, 1, 0, 1.05, 0.60, 1.05, pal, { highlight: isSel });
+              const topX = crown ? crown.roofX : box.roofX;
+              const topY = crown ? crown.roofY : box.roofY;
+
+              hitBoxes.push({ x: box.x, y: box.y, r: box.r + 6, depth: box.depth, type: 'project', data: p });
+
+              if (isSel || box.depth < 62) {
+                pendingLabels.push({
+                  priority: isSel ? 1 : 2,
+                  text: isSel ? `★ ${p.name.split(' (')[0]} • ${p.price}tr (n=${p.nObs})` : `${p.name.split(' (')[0]} (${p.price}tr • n=${p.nObs})`,
+                  x: topX,
+                  y: topY - 14,
+                  bg: isSel ? '#10b981' : 'rgba(15, 23, 42, 0.92)',
+                  fg: isSel ? '#022c22' : '#ffffff',
+                  border: isSel ? '#ffffff' : pal.front,
+                  font: isSel ? 'bold 12px sans-serif' : '600 12px sans-serif'
+                });
+              }
+            }
+          }
+        });
+      });
+
+      // 8F. STEP 2 INTERACTIVE MOVABLE 3D TEST BUILDING (SCIENTIFIC PARAMETER SIMULATION)
+      if (state.step === 2 && activeProj) {
+        const dm = state.experimentDist;
+        const worldDist = (dm / 1000) * 8.2;
+        const dirX = 0.88, dirZ = 0.47;
+        const testX = activeProj.sx + dirX * worldDist;
+        const testZ = activeProj.sz + dirZ * worldDist;
+
+        const isNear = dm < 500;
+        const isSweet = dm >= 500 && dm <= 1000;
+        const bonusH = isSweet ? 3.4 : (isNear ? 0.5 : 0.15);
+        const pal = isSweet ? TOWER_PALETTES.GOLD : (isNear ? TOWER_PALETTES.NEAR : TOWER_PALETTES.FAR);
+
+        const pt = project(testX, 4.0, testZ);
+        if (pt) {
+          renderQueue.push({
+            depth: pt.depth - 2.0,
+            draw: () => {
+              drawOrientedBox3D(testX, 0, testZ, 1, 0, 2.2, 5.2, 2.2, TOWER_PALETTES.BASE, { shadow: true, windows: true });
+              const topB = drawOrientedBox3D(testX, 5.2, testZ, 1, 0, 2.25, bonusH, 2.25, pal, { highlight: true });
+              if (!topB) return;
+
+              const headline = isSweet
+                ? `CỰ LY ${dm}M (VÀNH ĐAI 500–1000M): β = +0.0383*** (+3.91%)`
+                : (isNear
+                  ? `CỰ LY ${dm}M (VÀNH ĐAI <500M): β = +0.0041 (p = 0.415, ns)`
+                  : `CỰ LY ${dm}M (NGOÀI VÙNG TOD): β = 0.0000 (Nhóm đối chiếu)`);
+
+              pendingLabels.push({
+                priority: 0,
+                text: headline,
+                x: topB.roofX,
+                y: topB.roofY - 18,
+                bg: isSweet ? '#10b981' : (isNear ? '#2563eb' : '#e11d48'),
+                fg: isSweet ? '#022c22' : '#ffffff',
+                border: '#ffffff',
+                font: 'bold 12px sans-serif'
+              });
+            }
+          });
+        }
+      }
+
+      renderQueue.sort((a, b) => b.depth - a.depth);
+      renderQueue.forEach(item => item.draw());
+
+      // 9. 3D VISUALIZATION OF EUCLIDEAN VS. GIS NETWORK DISTANCE
+      if ((state.step === 1 || state.step === 2) && activeProj) {
+        const targetX = state.step === 2
+          ? activeProj.sx + 0.88 * ((state.experimentDist / 1000) * 8.2)
+          : activeProj.x;
+        const targetZ = state.step === 2
+          ? activeProj.sz + 0.47 * ((state.experimentDist / 1000) * 8.2)
+          : activeProj.z;
+        const walkMeters = state.step === 2 ? state.experimentDist : activeProj.walk;
+        const euclidMeters = state.step === 2 ? Math.round(walkMeters * 0.76) : activeProj.euclid;
+
+        const bPt = project(targetX, 0.18, targetZ);
+        const midPt = project(activeProj.sx, 0.18, targetZ);
+        const sPt = project(activeProj.sx, 0.18, activeProj.sz);
+        if (bPt && midPt && sPt) {
+          ctx.save();
+          ctx.strokeStyle = walkMeters <= 1000 ? '#10b981' : '#f43f5e';
+          ctx.lineWidth = 3.5;
+          ctx.beginPath();
+          ctx.moveTo(bPt.x, bPt.y);
+          ctx.lineTo(midPt.x, midPt.y);
+          ctx.lineTo(sPt.x, sPt.y);
+          ctx.stroke();
+
+          for (let d = 0; d < 5; d++) {
+            const u = ((state.time * 0.45) + d * 0.2) % 1;
+            const wx = u < 0.5 ? (targetX + (activeProj.sx - targetX) * (u * 2)) : activeProj.sx;
+            const wz = u < 0.5 ? targetZ : (targetZ + (activeProj.sz - targetZ) * ((u - 0.5) * 2));
+            const dotP = project(wx, 0.24, wz);
+            if (dotP) {
+              ctx.fillStyle = '#fef08a';
+              ctx.beginPath();
+              ctx.arc(dotP.x, dotP.y, 3.2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          ctx.restore();
+
+          pendingLabels.push({
+            priority: 1,
+            text: `GIS Network: ${walkMeters}m`,
+            x: midPt.x,
+            y: midPt.y + 14,
+            bg: 'rgba(6, 78, 59, 0.92)',
+            fg: '#6ee7b7',
+            border: '#10b981',
+            font: 'bold 12px sans-serif'
+          });
+        }
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.85)';
+        ctx.lineWidth = 2.0;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        let arcMid = null;
+        for (let s = 0; s <= 16; s++) {
+          const u = s / 16;
+          const ax = targetX + (activeProj.sx - targetX) * u;
+          const az = targetZ + (activeProj.sz - targetZ) * u;
+          const ay = 1.2 + Math.sin(u * Math.PI) * 4.5;
+          const ap = project(ax, ay, az);
+          if (ap) {
+            if (s === 0) ctx.moveTo(ap.x, ap.y);
+            else ctx.lineTo(ap.x, ap.y);
+            if (s === 8) arcMid = ap;
+          }
+        }
+        ctx.stroke();
+        ctx.restore();
+
+        if (arcMid && state.step === 1) {
+          pendingLabels.push({
+            priority: 2,
+            text: `Euclidean: ${euclidMeters}m`,
+            x: arcMid.x,
+            y: arcMid.y - 10,
+            bg: 'rgba(15, 23, 42, 0.88)',
+            fg: '#fde68a',
+            border: 'rgba(251, 191, 36, 0.6)',
+            font: '600 12px sans-serif'
+          });
+        }
+      }
+
+      // 10. STEP 3 HOLOGRAPHIC INVERTED-U ARCH & 4 ZONE ECONOMETRIC PILLARS
+      if (state.step === 3 && activeProj) {
+        const ox = activeProj.sx, oz = activeProj.sz;
+        const dirX = 0.88, dirZ = 0.47;
+
+        const zonePillars = [
+          { r: 2.5, h: 2.2, pal: TOWER_PALETTES.NEAR,   lbl: '<500m: +0.41% (ns)' },
+          { r: 6.2, h: 10.8, pal: TOWER_PALETTES.GOLD,  lbl: '500–1000m: +3.91% ***' },
+          { r: 10.2, h: 1.6, pal: TOWER_PALETTES.BUFFER,lbl: '1000–1500m: +0.02% (ns)' },
+          { r: 14.0, h: 1.2, pal: TOWER_PALETTES.FAR,   lbl: '>1500m: 0.00% (Ref)' }
+        ];
+        zonePillars.forEach((zp, idx) => {
+          const px = ox + dirX * zp.r;
+          const pz = oz + dirZ * zp.r;
+          const box = drawOrientedBox3D(px, 0, pz, dirX, dirZ, 1.4, zp.h, 1.4, zp.pal, { highlight: idx === 1, shadow: true });
+          if (box) {
+            pendingLabels.push({
+              priority: idx === 1 ? 0 : 1,
+              text: zp.lbl,
+              x: box.roofX,
+              y: box.roofY - 14,
+              bg: idx === 1 ? '#10b981' : 'rgba(15, 23, 42, 0.92)',
+              fg: idx === 1 ? '#022c22' : '#ffffff',
+              border: idx === 1 ? '#ffffff' : zp.pal.front,
+              font: 'bold 12px sans-serif'
+            });
+          }
+        });
+
+        ctx.save();
+        ctx.strokeStyle = '#fde68a';
+        ctx.lineWidth = 4.0;
+        ctx.beginPath();
+        for (let r = 0; r <= 32; r++) {
+          const distU = (r / 32) * 15.0;
+          const dm = (distU / 8.2) * 1000;
+          const hy = dm < 500
+            ? 1.5 + (dm / 500) * 2.2
+            : (dm <= 1000
+              ? 11.4 - Math.pow((dm - 750) / 250, 2) * 3.5
+              : Math.max(1.2, 7.9 * (1 - (dm - 1000) / 550)));
+          const pt = project(ox + dirX * distU, hy, oz + dirZ * distU);
+          if (pt) {
+            if (r === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+          }
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 11. LANDMARK WATER LABELS
+      const htCenter = gpsToWorld(21.0635, 105.8210);
+      const htLbl = project(htCenter.x, 0.2, htCenter.z);
+      if (htLbl) {
+        pendingLabels.push({
+          priority: 3, text: 'HỒ TÂY', x: htLbl.x, y: htLbl.y,
+          bg: null, fg: isOSM ? '#0369a1' : '#38bdf8', border: null, font: 'bold 12px sans-serif'
+        });
+      }
+      const shCenter = gpsToWorld(21.062, 105.847);
+      const shLbl = project(shCenter.x, 0.2, shCenter.z);
+      if (shLbl) {
+        pendingLabels.push({
+          priority: 3, text: 'SÔNG HỒNG', x: shLbl.x, y: shLbl.y,
+          bg: null, fg: isOSM ? '#0369a1' : '#38bdf8', border: null, font: 'bold 12px sans-serif'
+        });
+      }
+
+      // 12. RENDER COLLISION-FREE LABELS
+      pendingLabels.sort((a, b) => a.priority - b.priority);
+      pendingLabels.forEach(lbl => {
+        tryDrawLabel(lbl.text, lbl.x, lbl.y, lbl.bg, lbl.fg, lbl.border, lbl.font);
+      });
+
+      requestAnimationFrame(render);
+    }
+
+    // =========================================================================
+    // 8. UNIFIED DESKTOP & MOBILE GESTURES
+    // =========================================================================
+    let isDown = false, dragMode = 'orbit', sx = 0, sy = 0, lx = 0, ly = 0, pinchDist = 0;
+
+    function onTap(cx, cy) {
+      let hit = null, minD = Infinity;
+      for (const h of hitBoxes) {
+        const d = Math.hypot(cx - h.x, cy - h.y);
+        if (d <= h.r && h.depth < minD) {
+          minD = h.depth;
+          hit = h;
+        }
+      }
+      if (hit) {
+        if (hit.type === 'project') {
+          focusProject(hit.data.id);
+        } else if (hit.type === 'station') {
+          state.selectedStation = hit.data;
+          state.cam.goalTx = hit.data.x;
+          state.cam.goalTz = hit.data.z;
+          state.cam.goalDist = 26;
+          openSheet('station');
+        }
+      } else {
+        closeSheet();
+      }
+    }
+
+    canvas.addEventListener('mousedown', e => {
+      isDown = true;
+      dragMode = (e.button === 2 || e.shiftKey) ? 'pan' : 'orbit';
+      sx = lx = e.clientX;
+      sy = ly = e.clientY;
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (!isDown) return;
+      const dx = e.clientX - lx, dy = e.clientY - ly;
+      lx = e.clientX; ly = e.clientY;
+      if (dragMode === 'orbit') {
+        state.cam.goalYaw -= dx * 0.0065;
+        state.cam.goalPitch += dy * 0.0055;
+      } else {
+        const pf = state.cam.dist * 0.0018;
+        state.cam.goalTx -= (dx * Math.cos(state.cam.yaw) - dy * Math.sin(state.cam.yaw)) * pf;
+        state.cam.goalTz -= (dx * Math.sin(state.cam.yaw) + dy * Math.cos(state.cam.yaw)) * pf;
+      }
+    });
+
+    window.addEventListener('mouseup', e => {
+      if (!isDown) return;
+      isDown = false;
+      if (Math.hypot(e.clientX - sx, e.clientY - sy) < 6) onTap(e.clientX, e.clientY);
+    });
+
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      state.cam.goalDist += e.deltaY * 0.06;
+    }, { passive: false });
+
+    canvas.addEventListener('touchstart', e => {
+      if (e.touches.length === 1) {
+        isDown = true;
+        sx = lx = e.touches[0].clientX;
+        sy = ly = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        isDown = false;
+        pinchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', e => {
+      if (e.touches.length === 1 && isDown) {
+        const cx = e.touches[0].clientX, cy = e.touches[0].clientY;
+        state.cam.goalYaw -= (cx - lx) * 0.007;
+        state.cam.goalPitch += (cy - ly) * 0.006;
+        lx = cx; ly = cy;
+      } else if (e.touches.length === 2 && pinchDist > 0) {
+        const nd = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        state.cam.goalDist -= (nd - pinchDist) * 0.22;
+        pinchDist = nd;
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', e => {
+      if (isDown && e.changedTouches.length === 1) {
+        const tx = e.changedTouches[0].clientX, ty = e.changedTouches[0].clientY;
+        if (Math.hypot(tx - sx, ty - sy) < 10) onTap(tx, ty);
+      }
+      isDown = false;
+      pinchDist = 0;
+    }, { passive: true });
+
+    // Optional URL parameter support for automated visual testing (?step=2, ?proj=P5, ?tab=districts)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('step')) {
+      setStep(Number(params.get('step')));
+      state.cam.tx = state.cam.goalTx;
+      state.cam.ty = state.cam.goalTy;
+      state.cam.tz = state.cam.goalTz;
+      state.cam.yaw = state.cam.goalYaw;
+      state.cam.pitch = state.cam.goalPitch;
+      state.cam.dist = state.cam.goalDist;
+    }
+    if (params.get('proj')) {
+      focusProject(params.get('proj'));
+      state.cam.tx = state.cam.goalTx;
+      state.cam.ty = state.cam.goalTy;
+      state.cam.tz = state.cam.goalTz;
+      state.cam.yaw = state.cam.goalYaw;
+      state.cam.pitch = state.cam.goalPitch;
+      state.cam.dist = state.cam.goalDist;
+    }
+    if (params.get('tab')) {
+      switchSummaryTab(params.get('tab'));
+    }
+
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>

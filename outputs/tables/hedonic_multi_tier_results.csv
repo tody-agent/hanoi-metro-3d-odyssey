@@ -1,0 +1,12 @@
+variable,M1_Continuous_coef,M1_Continuous_se,M1_Continuous_pval,M1_Continuous_stars,M2_TOD_Unadjusted_coef,M2_TOD_Unadjusted_se,M2_TOD_Unadjusted_pval,M2_TOD_Unadjusted_stars,M3_Main_UrbanRing_CBD_coef,M3_Main_UrbanRing_CBD_se,M3_Main_UrbanRing_CBD_pval,M3_Main_UrbanRing_CBD_stars,M4_Robust_HistoricalSubmarket_coef,M4_Robust_HistoricalSubmarket_se,M4_Robust_HistoricalSubmarket_pval,M4_Robust_HistoricalSubmarket_stars,M5_Robust_NewWard_2Level_coef,M5_Robust_NewWard_2Level_se,M5_Robust_NewWard_2Level_pval,M5_Robust_NewWard_2Level_stars,M6_Sensitivity_ExactProjectOnly_coef,M6_Sensitivity_ExactProjectOnly_se,M6_Sensitivity_ExactProjectOnly_pval,M6_Sensitivity_ExactProjectOnly_stars
+const,4.3582,0.0087,0.00000,***,4.3856,0.0089,0.00000,***,4.5658,0.0194,0.00000,***,4.5520,0.0140,0.00000,***,4.6468,0.0349,0.00000,***,4.5624,0.0239,0.00000,***
+metro_dist_km,0.0083,0.0013,0.00000,***,,,,,,,,,,,,,,,,,,,,
+band_lt_500,,,,,-0.0828,0.0077,0.00000,***,0.0030,0.0069,0.66516,,0.0041,0.0069,0.55324,,0.0018,0.0083,0.83095,,0.0053,0.0086,0.54214,
+band_500_1000,,,,,-0.0073,0.0052,0.15690,,0.0354,0.0048,0.00000,***,0.0383,0.0048,0.00000,***,0.0366,0.0063,0.00000,***,0.0383,0.0060,0.00000,***
+band_1000_1500,,,,,-0.0134,0.0060,0.02514,**,-0.0015,0.0056,0.79495,,0.0002,0.0057,0.97205,,0.0001,0.0067,0.98725,,0.0089,0.0070,0.20162,
+area_m2,0.0003,0.0002,0.04215,**,0.0003,0.0002,0.04404,**,0.0009,0.0001,0.00000,***,0.0009,0.0001,0.00000,***,0.0009,0.0001,0.00000,***,0.0010,0.0002,0.00000,***
+bedrooms,-0.0304,0.0048,0.00000,***,-0.0300,0.0048,0.00000,***,-0.0391,0.0042,0.00000,***,-0.0389,0.0042,0.00000,***,-0.0388,0.0042,0.00000,***,-0.0425,0.0052,0.00000,***
+ln_dist_cbd,,,,,,,,,-0.0522,0.0125,0.00003,***,,,,,-0.0595,0.0208,0.00418,***,-0.0571,0.0154,0.00022,***
+R2,0.0063,,,,0.0120,,,,0.2470,,,,0.2492,,,,0.2500,,,,0.2530,,,
+Adj_R2,0.0061,,,,0.0117,,,,0.2466,,,,0.2487,,,,0.2488,,,,0.2523,,,
+N,16471,,,,16471,,,,16471,,,,16471,,,,16471,,,,10521,,,

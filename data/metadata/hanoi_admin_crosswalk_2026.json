@@ -1,0 +1,175 @@
+{
+  "schema_version": "2.0.0",
+  "title": "Hanoi Bi-Temporal Administrative & Functional Urban Crosswalk (3-Tier Spatial Architecture)",
+  "description": "Bảng ánh xạ không gian 3 tầng cho nghiên cứu Hedonic Pricing & GIS tại Hà Nội (N = 16.471 căn hộ dọc hành lang Metro Tuyến 2A & Tuyến 3), xử lý cải cách bỏ cấp quận/huyện sang mô hình chính quyền địa phương 2 cấp (Thành phố -> Phường/Xã mới).",
+  "crs_geographic": "EPSG:4326",
+  "crs_projected": "EPSG:32648 (WGS 84 / UTM zone 48N)",
+  "cbd_reference": {
+    "name": "Hồ Hoàn Kiếm (Bưu điện Hà Nội)",
+    "lat": 21.028511,
+    "lon": 105.854444
+  },
+  "metro_stations": [
+    {"station_id": "L2A_01", "name": "Cát Linh", "line": "2A", "lat": 21.0283, "lon": 105.8272, "status": "operating", "opened_year": 2021},
+    {"station_id": "L2A_02", "name": "La Thành", "line": "2A", "lat": 21.0211, "lon": 105.8219, "status": "operating", "opened_year": 2021},
+    {"station_id": "L2A_03", "name": "Thái Hà", "line": "2A", "lat": 21.0148, "lon": 105.8190, "status": "operating", "opened_year": 2021},
+    {"station_id": "L2A_04", "name": "Láng", "line": "2A", "lat": 21.0069, "lon": 105.8159, "status": "operating", "opened_year": 2021},
+    {"station_id": "L2A_05", "name": "Thượng Đình", "line": "2A", "lat": 20.9985, "lon": 105.8105, "status": "operating", "opened_year": 2021},
+    {"station_id": "L2A_06", "name": "Vành Đai 3", "line": "2A", "lat": 20.9908, "lon": 105.8022, "status": "operating", "opened_year": 2021},
+    {"station_id": "L2A_07", "name": "Phùng Khoang", "line": "2A", "lat": 20.9841, "lon": 105.7925, "status": "operating", "opened_year": 2021},
+    {"station_id": "L2A_08", "name": "Văn Quán", "line": "2A", "lat": 20.9774, "lon": 105.7834, "status": "operating", "opened_year": 2021},
+    {"station_id": "L2A_09", "name": "Hà Đông", "line": "2A", "lat": 20.9708, "lon": 105.7745, "status": "operating", "opened_year": 2021},
+    {"station_id": "L2A_10", "name": "La Khê", "line": "2A", "lat": 20.9635, "lon": 105.7642, "status": "operating", "opened_year": 2021},
+    {"station_id": "L2A_11", "name": "Văn Khê", "line": "2A", "lat": 20.9572, "lon": 105.7556, "status": "operating", "opened_year": 2021},
+    {"station_id": "L2A_12", "name": "Yên Nghĩa", "line": "2A", "lat": 20.9498, "lon": 105.7460, "status": "operating", "opened_year": 2021},
+    {"station_id": "L3_01", "name": "Nhổn", "line": "3", "lat": 21.0528, "lon": 105.7351, "status": "operating", "opened_year": 2024},
+    {"station_id": "L3_02", "name": "Minh Khai", "line": "3", "lat": 21.0485, "lon": 105.7455, "status": "operating", "opened_year": 2024},
+    {"station_id": "L3_03", "name": "Phú Diễn", "line": "3", "lat": 21.0439, "lon": 105.7573, "status": "operating", "opened_year": 2024},
+    {"station_id": "L3_04", "name": "Cầu Diễn", "line": "3", "lat": 21.0402, "lon": 105.7668, "status": "operating", "opened_year": 2024},
+    {"station_id": "L3_05", "name": "Lê Đức Thọ", "line": "3", "lat": 21.0378, "lon": 105.7766, "status": "operating", "opened_year": 2024},
+    {"station_id": "L3_06", "name": "Đại học Quốc gia", "line": "3", "lat": 21.0369, "lon": 105.7848, "status": "operating", "opened_year": 2024},
+    {"station_id": "L3_07", "name": "Chùa Hà", "line": "3", "lat": 21.0352, "lon": 105.7946, "status": "operating", "opened_year": 2024},
+    {"station_id": "L3_08", "name": "Cầu Giấy", "line": "3", "lat": 21.0294, "lon": 105.8034, "status": "operating", "opened_year": 2024}
+  ],
+  "urban_ring_sectors": [
+    {
+      "zone_id": "UZ1_Core_Ring1_2",
+      "name_vi": "Vùng 1: Lõi Nội Đô Lịch Sử & Cận Vành Đai 2",
+      "radius_cbd_km_range": [0.0, 5.2],
+      "description": "Khu vực trung tâm chính trị - hành chính - thương mại truyền thống (trong và sát Vành đai 2: Giảng Võ, Cát Linh, Láng Hạ, Thái Hà).",
+      "typical_historical_submarkets": ["Ba Đình", "Đống Đa"],
+      "typical_new_wards": ["Phường Giảng Võ", "Phường Ba Đình", "Phường Ngọc Hà", "Phường Đống Đa", "Phường Ô Chợ Dừa", "Phường Láng"]
+    },
+    {
+      "zone_id": "UZ2_Inner_Ring2_3",
+      "name_vi": "Vùng 2: Nội Đô Phát Triển (Giữa Vành Đai 2 & Vành Đai 3)",
+      "radius_cbd_km_range": [5.2, 8.2],
+      "description": "Khu vực tập trung cao ốc văn phòng, trường đại học và tổ hợp chung cư cao cấp - trung cấp dọc trục Xuân Thủy - Cầu Giấy và Nguyễn Trãi - Lê Văn Lương.",
+      "typical_historical_submarkets": ["Cầu Giấy", "Thanh Xuân"],
+      "typical_new_wards": ["Phường Cầu Giấy", "Phường Dịch Vọng", "Phường Nghĩa Đô", "Phường Yên Hòa", "Phường Thanh Xuân", "Phường Nhân Chính", "Phường Khương Đình"]
+    },
+    {
+      "zone_id": "UZ3_West_Corridor_Ring3_35",
+      "name_vi": "Vùng 3: Hành Lang Đô Thị Hóa Phía Tây (Vành Đai 3 – Vành Đai 3.5)",
+      "radius_cbd_km_range": [8.2, 12.5],
+      "description": "Khu vực phát triển đô thị mới quy mô lớn phía Tây và Tây Bắc (Mỹ Đình, Hồ Tùng Mậu, Cầu Diễn, Phú Diễn, Tây Mỗ).",
+      "typical_historical_submarkets": ["Nam Từ Liêm", "Bắc Từ Liêm"],
+      "typical_new_wards": ["Phường Từ Liêm", "Phường Mỹ Đình", "Phường Tây Mỗ", "Phường Đại Mỗ", "Phường Phú Diễn", "Phường Xuân Đỉnh", "Phường Minh Khai"]
+    },
+    {
+      "zone_id": "UZ4_Southwest_TOD_Ring35_4",
+      "name_vi": "Vùng 4: Hành Lang Đô Thị Phía Tây Nam (Vành Đai 3.5 – Vành Đai 4)",
+      "radius_cbd_km_range": [9.5, 16.0],
+      "description": "Hành lang phát triển nhà ở thương mại đại chúng dọc trục Trần Phú - Quang Trung - Tố Hữu - Lê Trọng Tấn (tuyến Metro 2A).",
+      "typical_historical_submarkets": ["Hà Đông"],
+      "typical_new_wards": ["Phường Hà Đông", "Phường Mộ Lao", "Phường Văn Quán", "Phường Dương Nội", "Phường Kiến Hưng", "Phường Yên Nghĩa", "Phường La Khê"]
+    }
+  ],
+  "historical_submarket_crosswalk": {
+    "Ba Đình": {
+      "sample_n": 420,
+      "mean_price_m2": 99.06,
+      "median_price_m2": 87.36,
+      "std_price_m2": 35.98,
+      "mean_area_m2": 88.4,
+      "primary_urban_zone": "UZ1_Core_Ring1_2",
+      "center_lat": 21.0318,
+      "center_lon": 105.8185,
+      "new_2level_wards": [
+        {"ward_code": "HN_W01", "ward_name": "Phường Giảng Võ (TP. Hà Nội)", "legacy_wards": ["Giảng Võ", "Thành Công", "Ngọc Khánh"], "share": 0.52},
+        {"ward_code": "HN_W02", "ward_name": "Phường Ngọc Hà (TP. Hà Nội)", "legacy_wards": ["Ngọc Hà", "Liễu Giai", "Đội Cấn", "Cống Vị"], "share": 0.33},
+        {"ward_code": "HN_W03", "ward_name": "Phường Ba Đình (TP. Hà Nội)", "legacy_wards": ["Kim Mã", "Điện Biên", "Quán Thánh"], "share": 0.15}
+      ]
+    },
+    "Đống Đa": {
+      "sample_n": 908,
+      "mean_price_m2": 78.75,
+      "median_price_m2": 75.83,
+      "std_price_m2": 25.06,
+      "mean_area_m2": 82.1,
+      "primary_urban_zone": "UZ1_Core_Ring1_2",
+      "center_lat": 21.0152,
+      "center_lon": 105.8215,
+      "new_2level_wards": [
+        {"ward_code": "HN_W04", "ward_name": "Phường Láng (TP. Hà Nội)", "legacy_wards": ["Láng Thượng", "Láng Hạ", "Thịnh Quang"], "share": 0.46},
+        {"ward_code": "HN_W05", "ward_name": "Phường Ô Chợ Dừa (TP. Hà Nội)", "legacy_wards": ["Ô Chợ Dừa", "Cát Linh", "Hàng Bột", "Quang Trung"], "share": 0.34},
+        {"ward_code": "HN_W06", "ward_name": "Phường Đống Đa (TP. Hà Nội)", "legacy_wards": ["Trung Liệt", "Nam Đồng", "Phương Liên"], "share": 0.20}
+      ]
+    },
+    "Cầu Giấy": {
+      "sample_n": 2895,
+      "mean_price_m2": 83.39,
+      "median_price_m2": 78.97,
+      "std_price_m2": 20.69,
+      "mean_area_m2": 89.2,
+      "primary_urban_zone": "UZ2_Inner_Ring2_3",
+      "center_lat": 21.0315,
+      "center_lon": 105.7925,
+      "new_2level_wards": [
+        {"ward_code": "HN_W07", "ward_name": "Phường Cầu Giấy (TP. Hà Nội)", "legacy_wards": ["Dịch Vọng", "Dịch Vọng Hậu", "Quan Hoa"], "share": 0.42},
+        {"ward_code": "HN_W08", "ward_name": "Phường Yên Hòa (TP. Hà Nội)", "legacy_wards": ["Yên Hòa", "Trung Hòa"], "share": 0.36},
+        {"ward_code": "HN_W09", "ward_name": "Phường Nghĩa Đô (TP. Hà Nội)", "legacy_wards": ["Nghĩa Đô", "Nghĩa Tân", "Mai Dịch"], "share": 0.22}
+      ]
+    },
+    "Thanh Xuân": {
+      "sample_n": 2355,
+      "mean_price_m2": 81.27,
+      "median_price_m2": 81.43,
+      "std_price_m2": 16.16,
+      "mean_area_m2": 91.5,
+      "primary_urban_zone": "UZ2_Inner_Ring2_3",
+      "center_lat": 20.9965,
+      "center_lon": 105.8065,
+      "new_2level_wards": [
+        {"ward_code": "HN_W10", "ward_name": "Phường Thanh Xuân (TP. Hà Nội)", "legacy_wards": ["Thanh Xuân Trung", "Thượng Đình", "Thanh Xuân Bắc", "Thanh Xuân Nam"], "share": 0.48},
+        {"ward_code": "HN_W11", "ward_name": "Phường Nhân Chính (TP. Hà Nội)", "legacy_wards": ["Nhân Chính", "Hạ Đình"], "share": 0.32},
+        {"ward_code": "HN_W12", "ward_name": "Phường Khương Đình (TP. Hà Nội)", "legacy_wards": ["Khương Đình", "Khương Mai", "Khương Trung"], "share": 0.20}
+      ]
+    },
+    "Bắc Từ Liêm": {
+      "sample_n": 1643,
+      "mean_price_m2": 81.55,
+      "median_price_m2": 80.00,
+      "std_price_m2": 18.69,
+      "mean_area_m2": 84.7,
+      "primary_urban_zone": "UZ3_West_Corridor_Ring3_35",
+      "center_lat": 21.0510,
+      "center_lon": 105.7580,
+      "new_2level_wards": [
+        {"ward_code": "HN_W13", "ward_name": "Phường Phú Diễn (TP. Hà Nội)", "legacy_wards": ["Phú Diễn", "Phúc Diễn", "Minh Khai"], "share": 0.50},
+        {"ward_code": "HN_W14", "ward_name": "Phường Xuân Đỉnh (TP. Hà Nội)", "legacy_wards": ["Xuân Đỉnh", "Xuân Tảo", "Cổ Nhuế 1"], "share": 0.32},
+        {"ward_code": "HN_W15", "ward_name": "Phường Đông Ngạc (TP. Hà Nội)", "legacy_wards": ["Đông Ngạc", "Cổ Nhuế 2", "Đức Thắng"], "share": 0.18}
+      ]
+    },
+    "Nam Từ Liêm": {
+      "sample_n": 4889,
+      "mean_price_m2": 76.68,
+      "median_price_m2": 74.03,
+      "std_price_m2": 17.23,
+      "mean_area_m2": 94.6,
+      "primary_urban_zone": "UZ3_West_Corridor_Ring3_35",
+      "center_lat": 21.0165,
+      "center_lon": 105.7620,
+      "new_2level_wards": [
+        {"ward_code": "HN_W16", "ward_name": "Phường Từ Liêm (TP. Hà Nội)", "legacy_wards": ["Mỹ Đình 1", "Mỹ Đình 2", "Cầu Diễn", "Phú Đô"], "share": 0.41},
+        {"ward_code": "HN_W17", "ward_name": "Phường Tây Mỗ (TP. Hà Nội)", "legacy_wards": ["Tây Mỗ", "Đại Mỗ"], "share": 0.38},
+        {"ward_code": "HN_W18", "ward_name": "Phường Mễ Trì (TP. Hà Nội)", "legacy_wards": ["Mễ Trì", "Trung Văn", "Phương Canh"], "share": 0.21}
+      ]
+    },
+    "Hà Đông": {
+      "sample_n": 3361,
+      "mean_price_m2": 59.33,
+      "median_price_m2": 57.26,
+      "std_price_m2": 13.03,
+      "mean_area_m2": 93.8,
+      "primary_urban_zone": "UZ4_Southwest_TOD_Ring35_4",
+      "center_lat": 20.9680,
+      "center_lon": 105.7695,
+      "new_2level_wards": [
+        {"ward_code": "HN_W19", "ward_name": "Phường Hà Đông (TP. Hà Nội)", "legacy_wards": ["Mộ Lao", "Văn Quán", "Quang Trung", "Yết Kiêu", "Nguyễn Trãi"], "share": 0.44},
+        {"ward_code": "HN_W20", "ward_name": "Phường Dương Nội (TP. Hà Nội)", "legacy_wards": ["Dương Nội", "La Khê", "Vạn Phúc"], "share": 0.34},
+        {"ward_code": "HN_W21", "ward_name": "Phường Kiến Hưng (TP. Hà Nội)", "legacy_wards": ["Kiến Hưng", "Hà Cầu", "Phú La", "Yên Nghĩa"], "share": 0.22}
+      ]
+    }
+  }
+}

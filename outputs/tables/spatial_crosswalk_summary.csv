@@ -1,0 +1,5 @@
+urban_ring_sector,sample_n,share_pct,mean_price_m2,median_price_m2,std_price_m2,mean_area_m2,mean_metro_dist_km,mean_cbd_dist_km,new_2level_wards_count,historical_submarkets
+UZ1_Core_Ring1_2,1559,9.47,92.44,88.69,24.05,86.05,1.112,3.78,9,Ba Đình; Cầu Giấy; Thanh Xuân; Đống Đa
+UZ2_Inner_Ring2_3,5819,35.33,83.49,81.21,20.6,90.14,1.255,6.7,9,Bắc Từ Liêm; Cầu Giấy; Nam Từ Liêm; Thanh Xuân
+UZ3_West_Corridor_Ring3_35,5732,34.8,80.16,77.82,19.48,92.57,2.458,9.48,6,Bắc Từ Liêm; Nam Từ Liêm
+UZ4_Southwest_TOD_Ring35_4,3361,20.41,60.09,57.91,15.0,93.08,0.903,11.72,3,Hà Đông

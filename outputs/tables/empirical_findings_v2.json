@@ -1,0 +1,77 @@
+{
+  "sample_size_n": 16471,
+  "active_metro_stations_n": 20,
+  "urban_ring_zones_n": 4,
+  "new_2level_wards_n": 21,
+  "historical_submarkets_n": 7,
+  "sweet_spot_500_1000m_effect": {
+    "M3_Main_UrbanRing_CBD": {
+      "beta": 0.0354,
+      "se": 0.0048,
+      "pct_premium": 3.61,
+      "p_val": 0.0,
+      "stars": "***",
+      "r2": 0.247
+    },
+    "M4_Robust_HistoricalSubmarket": {
+      "beta": 0.0383,
+      "se": 0.0048,
+      "pct_premium": 3.91,
+      "p_val": 0.0,
+      "stars": "***",
+      "r2": 0.2492
+    },
+    "M5_Robust_NewWard_2Level": {
+      "beta": 0.0366,
+      "se": 0.0063,
+      "pct_premium": 3.73,
+      "p_val": 0.0,
+      "stars": "***",
+      "r2": 0.25
+    },
+    "M6_Sensitivity_ExactProjectOnly": {
+      "beta": 0.0383,
+      "se": 0.006,
+      "pct_premium": 3.9,
+      "p_val": 0.0,
+      "stars": "***",
+      "n": 10521
+    }
+  },
+  "near_station_lt_500m_effect": {
+    "M3_Main_UrbanRing_CBD_beta": 0.003,
+    "M4_Robust_HistoricalSubmarket_beta": 0.0041,
+    "M5_Robust_NewWard_2Level_beta": 0.0018
+  },
+  "vif_diagnostics_m3": {
+    "band_lt_500": 1.223,
+    "band_500_1000": 1.428,
+    "band_1000_1500": 1.416,
+    "area_m2": 3.238,
+    "bedrooms": 3.227,
+    "ln_dist_cbd": 1.054
+  },
+  "spatial_diagnostics_morans_i": {
+    "unadjusted_m2": {
+      "n_project_clusters": 153,
+      "morans_i": 0.814,
+      "expected_i": -0.0066,
+      "z_score": 15.95,
+      "p_value": 0.0
+    },
+    "main_urban_ring_m3": {
+      "n_project_clusters": 153,
+      "morans_i": 0.0488,
+      "expected_i": -0.0066,
+      "z_score": 1.077,
+      "p_value": 0.2816
+    },
+    "new_2level_ward_m5": {
+      "n_project_clusters": 153,
+      "morans_i": -0.0393,
+      "expected_i": -0.0066,
+      "z_score": -0.637,
+      "p_value": 0.5243
+    }
+  }
+}
