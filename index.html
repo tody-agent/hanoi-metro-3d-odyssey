@@ -1,0 +1,1992 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Hanoi Metro 3D — Bản Đồ Đô Thị & Kết Quả Thực Nghiệm</title>
+  <meta name="description" content="Mô hình 3D Hà Nội theo tọa độ OpenStreetMap & Google Earth chia sẻ kết quả nghiên cứu 16.471 căn hộ dọc tuyến Metro 2A & Tuyến 3.">
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --emerald: #10b981;
+      --emerald-light: #34d399;
+      --emerald-dark: #059669;
+      --sky: #38bdf8;
+      --blue: #3b82f6;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --slate-950: #040914;
+      --slate-900: rgba(10, 18, 34, 0.90);
+      --border-glass: rgba(148, 163, 184, 0.24);
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--slate-950);
+      color: #f8fafc;
+      font-family: var(--font-sans);
+      touch-action: none;
+    }
+    #canvas3d {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+      z-index: 1;
+    }
+    #canvas3d:active {
+      cursor: grabbing;
+    }
+
+    /* Top Navigation Bar */
+    .hud-top {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      pointer-events: none;
+      flex-wrap: wrap;
+    }
+    .pill-group {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--slate-900);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-glass);
+      border-radius: 9999px;
+      padding: 4px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+      max-width: 100%;
+    }
+
+    .nav-btn {
+      border: none;
+      background: transparent;
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 13px;
+      border-radius: 9999px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav-btn:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .nav-btn.active {
+      background: var(--emerald);
+      color: #022c22;
+      font-weight: 700;
+      box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .action-group {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+    }
+    .icon-pill {
+      border: 1px solid var(--border-glass);
+      background: var(--slate-900);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: #f1f5f9;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 12px;
+      border-radius: 9999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      transition: all 0.2s ease;
+    }
+    .icon-pill:hover {
+      border-color: var(--emerald-light);
+    }
+    .icon-pill.active-mode {
+      background: rgba(16, 185, 129, 0.22);
+      border-color: var(--emerald-light);
+      color: var(--emerald-light);
+    }
+
+    /* Bottom Compact Prompt Bar */
+    .hud-bottom {
+      position: absolute;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      width: calc(100% - 24px);
+      max-width: 540px;
+      pointer-events: auto;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .hud-bottom.hidden-bar {
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 20px);
+    }
+    .prompt-card {
+      background: var(--slate-900);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border-glass);
+      border-radius: 18px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+    }
+    .prompt-info {
+      min-width: 0;
+      flex: 1;
+    }
+    .prompt-tag {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--emerald-light);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .prompt-sub {
+      font-size: 12px;
+      color: #cbd5e1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .cta-btn {
+      border: none;
+      background: var(--emerald);
+      color: #022c22;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 8px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .cta-btn:hover {
+      background: var(--emerald-light);
+    }
+
+    /* On-Demand Slide-Up Info Sheet */
+    .info-sheet {
+      position: absolute;
+      bottom: 14px;
+      right: 14px;
+      z-index: 30;
+      width: 410px;
+      max-width: calc(100vw - 24px);
+      max-height: 76vh;
+      background: rgba(10, 18, 34, 0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      border-radius: 22px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.72);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.24s ease;
+    }
+    .info-sheet.closed {
+      transform: translateY(115%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @media (max-width: 640px) {
+      .pill-group {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .nav-btn {
+        padding: 6px 8px;
+        flex: 1;
+        justify-content: center;
+      }
+      .hide-sm { display: none; }
+      .info-sheet {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        width: auto;
+        max-height: 68vh;
+      }
+    }
+
+    .sheet-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .sheet-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.16);
+      color: var(--emerald-light);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .close-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 9999px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(30, 41, 59, 0.8);
+      color: #e2e8f0;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .close-btn:hover { background: rgba(51, 65, 85, 0.9); }
+    .sheet-body {
+      padding: 15px 16px;
+      overflow-y: auto;
+      font-size: 12px;
+      line-height: 1.55;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      text-align: center;
+    }
+    .metric-box {
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 14px;
+      padding: 9px 6px;
+    }
+    .metric-label { color: #94a3b8; font-size: 12px; }
+    .metric-val { font-size: 14px; font-weight: 800; margin-top: 2px; }
+    .desc-box {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 14px;
+      padding: 11px 12px;
+      color: #cbd5e1;
+    }
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .chip-btn {
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      background: rgba(30, 41, 59, 0.8);
+      color: #e2e8f0;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 11px;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .chip-btn:hover { border-color: var(--emerald-light); }
+    .chip-btn.active {
+      background: var(--emerald);
+      color: #022c22;
+      border-color: var(--emerald-light);
+      font-weight: 700;
+    }
+    .calc-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .calc-select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .calc-range {
+      width: 100%;
+      accent-color: var(--emerald);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- FULLSCREEN 3D MAP CANVAS -->
+  <canvas id="canvas3d"></canvas>
+
+  <!-- TOP MINIMAL NAVIGATION (4 STEPS FIT PERFECTLY ON BOTH MOBILE & DESKTOP) -->
+  <header class="hud-top">
+    <nav class="pill-group" aria-label="Các bước khám phá">
+      <button onclick="setStep(1)" id="step-1" class="nav-btn active">
+        <span>1. Toàn Cảnh</span><span class="hide-sm">Hà Nội</span>
+      </button>
+      <button onclick="setStep(2)" id="step-2" class="nav-btn">
+        <span>2. Tuyến</span><span class="hide-sm">Metro</span>
+      </button>
+      <button onclick="setStep(3)" id="step-3" class="nav-btn">
+        <span>3. Kết Quả</span><span class="hide-sm">+3.91%</span>
+      </button>
+      <button onclick="setStep(4)" id="step-4" class="nav-btn">
+        <span>4. Tính Giá</span>
+      </button>
+    </nav>
+
+    <div class="action-group">
+      <button onclick="toggleMapTheme()" id="btn-theme" class="icon-pill" title="Đổi nền bản đồ OpenStreetMap / Google Earth">
+        <span id="theme-icon">🗺️</span>
+        <span id="theme-label">Nền OSM</span>
+      </button>
+      <button onclick="toggleTrainCam()" id="btn-train" class="icon-pill" title="Góc nhìn đi theo đoàn tàu Metro">
+        <span>🚝</span>
+        <span class="hide-sm" id="train-label">Theo Tàu</span>
+      </button>
+      <button onclick="resetCamera()" class="icon-pill" title="Đặt lại góc nhìn 3D chuẩn">
+        <span>🧭</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- BOTTOM MINIMAL PROMPT BAR -->
+  <div id="bottom-bar" class="hud-bottom">
+    <div class="prompt-card">
+      <div class="prompt-info">
+        <div id="bar-title" class="prompt-tag">BẢN ĐỒ 3D HÀ NỘI • 16.471 CĂN HỘ & 2 TUYẾN METRO</div>
+        <div id="bar-sub" class="prompt-sub">Chạm vào tòa nhà, nhà ga 3D bất kỳ hoặc bấm nút bên cạnh để xem</div>
+      </div>
+      <button onclick="openSheet('summary')" class="cta-btn">Xem Số Liệu ↑</button>
+    </div>
+  </div>
+
+  <!-- ON-DEMAND DETAIL SHEET (HIDDEN BY DEFAULT) -->
+  <section id="info-sheet" class="info-sheet closed" aria-live="polite">
+    <div class="sheet-header">
+      <span id="sheet-badge" class="sheet-badge">THÔNG TIN CHI TIẾT</span>
+      <button onclick="closeSheet()" class="close-btn" aria-label="Đóng">✕</button>
+    </div>
+    <div id="sheet-content" class="sheet-body"></div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- ARCHITECTURAL 3D ENGINE + REAL OSM/GOOGLE EARTH GPS GEOMETRY              -->
+  <!-- ========================================================================= -->
+  <script>
+    // =========================================================================
+    // 1. REAL WGS84 GPS PROJECTION (CENTER: TRUNG HÒA - NGÃ TƯ SỞ)
+    // =========================================================================
+    const LAT0 = 21.0105;
+    const LON0 = 105.8015;
+    const SCALE_KM = 8.8;
+
+    function gpsToWorld(lat, lon) {
+      return {
+        x: (lon - LON0) * 103.93 * SCALE_KM,
+        z: -(lat - LAT0) * 111.13 * SCALE_KM
+      };
+    }
+
+    function interpolateSpline(gpsList, subdivisions = 8) {
+      const raw = gpsList.map(p => ({
+        ...gpsToWorld(p[0], p[1]),
+        elev: p[2] !== undefined ? p[2] : 0
+      }));
+      if (raw.length < 2) return raw;
+
+      const out = [];
+      for (let i = 0; i < raw.length - 1; i++) {
+        const p0 = raw[Math.max(0, i - 1)];
+        const p1 = raw[i];
+        const p2 = raw[i + 1];
+        const p3 = raw[Math.min(raw.length - 1, i + 2)];
+
+        for (let s = 0; s < subdivisions; s++) {
+          const t = s / subdivisions, t2 = t * t, t3 = t2 * t;
+          const x = 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3);
+          const z = 0.5 * ((2 * p1.z) + (-p0.z + p2.z) * t + (2 * p0.z - 5 * p1.z + 4 * p2.z - p3.z) * t2 + (-p0.z + 3 * p1.z - 3 * p2.z + p3.z) * t3);
+          const elev = p1.elev + (p2.elev - p1.elev) * t;
+          out.push({ x, z, elev });
+        }
+      }
+      out.push({ ...raw[raw.length - 1] });
+
+      for (let i = 0; i < out.length; i++) {
+        const prev = out[Math.max(0, i - 1)];
+        const next = out[Math.min(out.length - 1, i + 1)];
+        const dx = next.x - prev.x, dz = next.z - prev.z;
+        const len = Math.hypot(dx, dz) || 1;
+        out[i].tx = dx / len;
+        out[i].tz = dz / len;
+        out[i].nx = -dz / len;
+        out[i].nz = dx / len;
+      }
+      return out;
+    }
+
+    // =========================================================================
+    // 2. REAL HANOI RIVERS, LAKES, PARKS & HIGHWAYS (OPENSTREETMAP GEOMETRY)
+    // =========================================================================
+    const RED_RIVER_SPLINE = interpolateSpline([
+      [21.105, 105.750],
+      [21.095, 105.782],
+      [21.084, 105.815],
+      [21.073, 105.835],
+      [21.057, 105.849],
+      [21.040, 105.860],
+      [21.020, 105.869],
+      [20.998, 105.882],
+      [20.972, 105.902]
+    ], 10);
+
+    const TO_LICH_RIVER = interpolateSpline([
+      [21.0450, 105.8065], [21.0365, 105.8042], [21.0292, 105.8035],
+      [21.0215, 105.8048], [21.0135, 105.8105], [21.0068, 105.8162],
+      [21.0030, 105.8195], [20.9920, 105.8175], [20.9785, 105.8195],
+      [20.9640, 105.8270]
+    ], 7);
+
+    const NHUE_RIVER = interpolateSpline([
+      [21.0640, 105.7530], [21.0435, 105.7595], [21.0300, 105.7605],
+      [21.0120, 105.7590], [20.9920, 105.7665], [20.9725, 105.7775],
+      [20.9500, 105.7865]
+    ], 7);
+
+    const DAY_RIVER = interpolateSpline([
+      [21.0120, 105.7080], [20.9850, 105.7220], [20.9640, 105.7340],
+      [20.9460, 105.7410], [20.9320, 105.7490]
+    ], 6);
+
+    // Smoothly interpolated Hồ Tây shoreline
+    const HO_TAY_POLY = interpolateSpline([
+      [21.0442, 105.8368], [21.0475, 105.8382], [21.0545, 105.8365],
+      [21.0625, 105.8315], [21.0695, 105.8245], [21.0715, 105.8165],
+      [21.0660, 105.8125], [21.0575, 105.8110], [21.0505, 105.8085],
+      [21.0452, 105.8120], [21.0435, 105.8215], [21.0438, 105.8305],
+      [21.0442, 105.8368]
+    ], 5);
+
+    const HANOI_LAKES = [
+      { name: 'Hồ Hoàn Kiếm', lat: 21.0287, lon: 105.8524, rx: 1.3, rz: 1.9 },
+      { name: 'Hồ Hoàng Cầu', lat: 21.0182, lon: 105.8218, rx: 1.4, rz: 1.7 },
+      { name: 'Hồ Thủ Lệ', lat: 21.0285, lon: 105.8068, rx: 1.4, rz: 1.7 },
+      { name: 'Hồ Giảng Võ', lat: 21.0268, lon: 105.8202, rx: 1.2, rz: 1.4 },
+      { name: 'Hồ Thành Công', lat: 21.0208, lon: 105.8152, rx: 1.1, rz: 1.4 },
+      { name: 'Hồ Văn Quán', lat: 20.9765, lon: 105.7888, rx: 1.5, rz: 1.7 },
+      { name: 'Hồ Linh Đàm', lat: 20.9660, lon: 105.8285, rx: 2.9, rz: 2.5 }
+    ].map(lk => ({ ...lk, ...gpsToWorld(lk.lat, lk.lon) }));
+
+    const HANOI_PARKS = [
+      { name: 'SVĐ Quốc Gia Mỹ Đình', lat: 21.0205, lon: 105.7638, rx: 2.8, rz: 2.2 },
+      { name: 'Công Viên Thủ Lệ', lat: 21.0285, lon: 105.8068, rx: 2.2, rz: 2.2 },
+      { name: 'Công Viên Cầu Giấy', lat: 21.0272, lon: 105.7912, rx: 1.8, rz: 1.8 },
+      { name: 'Bệnh Viện Bạch Mai', lat: 21.0018, lon: 105.8405, rx: 1.6, rz: 1.6 }
+    ].map(pk => ({ ...pk, ...gpsToWorld(pk.lat, pk.lon) }));
+
+    const OSM_ROADS = [
+      {
+        type: 'motorway',
+        pts: interpolateSpline([
+          [21.0780, 105.7855], [21.0520, 105.7815], [21.0372, 105.7805],
+          [21.0220, 105.7795], [21.0068, 105.7915], [20.9912, 105.8038],
+          [20.9765, 105.8165], [20.9645, 105.8295], [20.9600, 105.8580]
+        ], 8)
+      },
+      {
+        type: 'motorway',
+        pts: interpolateSpline([
+          [21.0030, 105.7150], [21.0038, 105.7480], [21.0055, 105.7720],
+          [21.0068, 105.7915], [21.0125, 105.8035], [21.0215, 105.8115],
+          [21.0310, 105.8168], [21.0415, 105.8185]
+        ], 7)
+      },
+      {
+        type: 'primary',
+        pts: interpolateSpline([
+          [21.0780, 105.8120], [21.0550, 105.8065], [21.0420, 105.8058],
+          [21.0294, 105.8035], [21.0155, 105.8095], [21.0065, 105.8164],
+          [21.0032, 105.8196], [20.9985, 105.8340], [20.9965, 105.8520]
+        ], 7)
+      },
+      {
+        type: 'primary',
+        pts: interpolateSpline([
+          [20.9720, 105.7480], [20.9825, 105.7685], [20.9965, 105.7915],
+          [21.0075, 105.8065], [21.0165, 105.8155], [21.0265, 105.8245],
+          [21.0284, 105.8273]
+        ], 6)
+      },
+      {
+        type: 'secondary',
+        pts: interpolateSpline([
+          [21.0038, 105.7350], [20.9820, 105.7510], [20.9635, 105.7646],
+          [20.9585, 105.7820], [20.9520, 105.8020]
+        ], 6)
+      },
+      {
+        type: 'primary',
+        pts: interpolateSpline([
+          [21.0285, 105.8415], [21.0242, 105.8415], [21.0085, 105.8412],
+          [20.9985, 105.8412], [20.9750, 105.8415]
+        ], 6)
+      }
+    ];
+
+    // =========================================================================
+    // 3. REALISTIC PROPORTIONAL VIADUCT ELEVATION & CURVED SPLINES
+    // =========================================================================
+    const LINE_2A_WAYPOINTS = [
+      [21.0284, 105.8273, 2.5], // Ga Cát Linh
+      [21.0252, 105.8266, 2.5], // Hào Nam
+      [21.0219, 105.8256, 2.5], // Ga La Thành
+      [21.0195, 105.8236, 2.5], // Curve around Hồ Hoàng Cầu
+      [21.0170, 105.8226, 2.5],
+      [21.0155, 105.8208, 2.5], // S-bend into Thái Hà
+      [21.0145, 105.8192, 2.5], // Ga Thái Hà
+      [21.0110, 105.8165, 2.5], // Yên Lãng
+      [21.0085, 105.8152, 2.5], // Curve onto Đường Láng
+      [21.0065, 105.8164, 2.5], // Ga Láng
+      [21.0042, 105.8184, 3.0], // Climbing Ngã Tư Sở
+      [21.0028, 105.8190, 3.3], // Ngã Tư Sở 90-deg curve apex
+      [21.0012, 105.8168, 2.7],
+      [20.9988, 105.8132, 2.5], // Ga Thượng Đình
+      [20.9950, 105.8085, 2.5],
+      [20.9912, 105.8038, 2.8], // Ga Vành Đai 3
+      [20.9878, 105.7992, 2.5],
+      [20.9845, 105.7946, 2.5], // Ga Phùng Khoang
+      [20.9810, 105.7900, 2.5],
+      [20.9774, 105.7852, 2.5], // Ga Văn Quán
+      [20.9738, 105.7805, 2.5], // Cầu Trắng bend
+      [20.9708, 105.7766, 2.5], // Ga Hà Đông
+      [20.9672, 105.7706, 2.5],
+      [20.9635, 105.7646, 2.5], // Ga La Khê
+      [20.9605, 105.7600, 2.5],
+      [20.9575, 105.7554, 2.5], // Ga Văn Khê
+      [20.9538, 105.7500, 2.5],
+      [20.9502, 105.7445, 2.5]  // Ga Yên Nghĩa
+    ];
+    const LINE_2A_SPLINE = interpolateSpline(LINE_2A_WAYPOINTS, 8);
+
+    const LINE_3_WAYPOINTS = [
+      [21.0528, 105.7332, 2.5], // Ga Nhổn
+      [21.0510, 105.7382, 2.5],
+      [21.0492, 105.7432, 2.5], // Ga Minh Khai
+      [21.0468, 105.7502, 2.5],
+      [21.0435, 105.7568, 2.5], // Ga Phú Diễn
+      [21.0412, 105.7612, 2.7], // Sông Nhuệ curve
+      [21.0398, 105.7655, 2.5], // Ga Cầu Diễn
+      [21.0391, 105.7700, 2.5],
+      [21.0385, 105.7745, 2.5], // Ga Lê Đức Thọ
+      [21.0376, 105.7802, 3.0], // Mai Dịch Overpass
+      [21.0368, 105.7848, 2.5], // Ga ĐH Quốc Gia
+      [21.0363, 105.7902, 2.5],
+      [21.0358, 105.7955, 2.5], // Ga Chùa Hà
+      [21.0338, 105.7995, 2.5], // Đường Cầu Giấy curve
+      [21.0315, 105.8018, 2.5],
+      [21.0294, 105.8035, 2.4], // Ga Cầu Giấy (Thủ Lệ)
+      [21.0302, 105.8095, 0.8], // Kim Mã ramp
+      [21.0310, 105.8168, 0.2], // Ga Kim Mã (Ngầm)
+      [21.0298, 105.8225, 0.2],
+      [21.0282, 105.8275, 0.2], // Ga Cát Linh (Ngầm T3)
+      [21.0268, 105.8358, 0.2], // Ga Văn Miếu (Ngầm)
+      [21.0242, 105.8415, 0.2]  // Ga Hà Nội (Ngầm)
+    ];
+    const LINE_3_SPLINE = interpolateSpline(LINE_3_WAYPOINTS, 8);
+
+    const STATIONS = [
+      { id: '2A-01', name: 'Ga Cát Linh', line: '2A', lat: 21.0284, lon: 105.8273, elev: 2.5, major: true },
+      { id: '2A-02', name: 'Ga La Thành', line: '2A', lat: 21.0219, lon: 105.8256, elev: 2.5, major: false },
+      { id: '2A-03', name: 'Ga Thái Hà', line: '2A', lat: 21.0145, lon: 105.8192, elev: 2.5, major: true },
+      { id: '2A-04', name: 'Ga Láng', line: '2A', lat: 21.0065, lon: 105.8164, elev: 2.5, major: false },
+      { id: '2A-05', name: 'Ga Thượng Đình', line: '2A', lat: 20.9988, lon: 105.8132, elev: 2.5, major: true },
+      { id: '2A-06', name: 'Ga Vành Đai 3', line: '2A', lat: 20.9912, lon: 105.8038, elev: 2.8, major: true },
+      { id: '2A-07', name: 'Ga Phùng Khoang', line: '2A', lat: 20.9845, lon: 105.7946, elev: 2.5, major: false },
+      { id: '2A-08', name: 'Ga Văn Quán', line: '2A', lat: 20.9774, lon: 105.7852, elev: 2.5, major: true },
+      { id: '2A-09', name: 'Ga Hà Đông', line: '2A', lat: 20.9708, lon: 105.7766, elev: 2.5, major: true },
+      { id: '2A-10', name: 'Ga La Khê', line: '2A', lat: 20.9635, lon: 105.7646, elev: 2.5, major: false },
+      { id: '2A-11', name: 'Ga Văn Khê', line: '2A', lat: 20.9575, lon: 105.7554, elev: 2.5, major: false },
+      { id: '2A-12', name: 'Ga Yên Nghĩa', line: '2A', lat: 20.9502, lon: 105.7445, elev: 2.5, major: true },
+      { id: '3-01', name: 'Ga Nhổn', line: '3', lat: 21.0528, lon: 105.7332, elev: 2.5, major: true },
+      { id: '3-02', name: 'Ga Minh Khai', line: '3', lat: 21.0492, lon: 105.7432, elev: 2.5, major: false },
+      { id: '3-03', name: 'Ga Phú Diễn', line: '3', lat: 21.0435, lon: 105.7568, elev: 2.5, major: false },
+      { id: '3-04', name: 'Ga Cầu Diễn', line: '3', lat: 21.0398, lon: 105.7655, elev: 2.5, major: true },
+      { id: '3-05', name: 'Ga Lê Đức Thọ', line: '3', lat: 21.0385, lon: 105.7745, elev: 2.5, major: false },
+      { id: '3-06', name: 'Ga ĐH Quốc Gia', line: '3', lat: 21.0368, lon: 105.7848, elev: 2.5, major: true },
+      { id: '3-07', name: 'Ga Chùa Hà', line: '3', lat: 21.0358, lon: 105.7955, elev: 2.5, major: false },
+      { id: '3-08', name: 'Ga Cầu Giấy', line: '3', lat: 21.0294, lon: 105.8035, elev: 2.4, major: true },
+      { id: '3-09', name: 'Ga Kim Mã', line: '3', lat: 21.0310, lon: 105.8168, elev: 0.4, major: false },
+      { id: '3-10', name: 'Ga Văn Miếu', line: '3', lat: 21.0268, lon: 105.8358, elev: 0.4, major: false },
+      { id: '3-11', name: 'Ga Hà Nội', line: '3', lat: 21.0242, lon: 105.8415, elev: 0.4, major: true }
+    ].map(st => {
+      const w = gpsToWorld(st.lat, st.lon);
+      const sp = st.line === '2A' ? LINE_2A_SPLINE : LINE_3_SPLINE;
+      let best = sp[0], minD = Infinity;
+      sp.forEach(pt => {
+        const d = Math.hypot(pt.x - w.x, pt.z - w.z);
+        if (d < minD) { minD = d; best = pt; }
+      });
+      return { ...st, x: w.x, z: w.z, tx: best.tx, tz: best.tz, nx: best.nx, nz: best.nz };
+    });
+
+    // =========================================================================
+    // 4. REAL APARTMENT COMPLEXES (TWIN/MULTI-TOWER ARCHITECTURAL CLUSTERS)
+    // =========================================================================
+    const PROJECTS = [
+      {
+        id: 'P1', name: 'Royal City (72A Nguyễn Trãi)', district: 'Thanh Xuân',
+        lat: 21.0022, lon: 105.8152, stLat: 20.9988, stLon: 105.8132,
+        station: 'Ga Thượng Đình (Tuyến 2A)', price: 88.7, area: '105 m² (3PN)',
+        walk: 750, euclid: 568, zone: 'SWEET', floors: 35, twin: true,
+        desc: 'Tổ hợp 6 tòa tháp tại 72A Nguyễn Trãi, đi bộ 750m qua cầu bộ hành Ngã Tư Sở tới Ga Thượng Đình. Thuộc vành đai tối ưu 500–1.000m (+3.91% ***).'
+      },
+      {
+        id: 'P2', name: 'Goldmark City (136 Hồ Tùng Mậu)', district: 'Bắc Từ Liêm',
+        lat: 21.0352, lon: 105.7642, stLat: 21.0398, stLon: 105.7655,
+        station: 'Ga Cầu Diễn (Tuyến 3)', price: 84.2, area: '83 m² (2PN)',
+        walk: 680, euclid: 515, zone: 'SWEET', floors: 40, twin: true,
+        desc: 'Tổ hợp 9 tòa tháp 40 tầng tại 136 Hồ Tùng Mậu, đi bộ 680m tới Ga Cầu Diễn. Tách khỏi tiếng ồn cầu cạn QL32, hưởng trọn thặng dư +3.91%.'
+      },
+      {
+        id: 'P3', name: 'Discovery Complex (302 Cầu Giấy)', district: 'Cầu Giấy',
+        lat: 21.0354, lon: 105.7938, stLat: 21.0358, stLon: 105.7955,
+        station: 'Ga Chùa Hà (Tuyến 3)', price: 89.5, area: '94 m² (2PN)',
+        walk: 320, euclid: 242, zone: 'NEAR', floors: 43, twin: true,
+        desc: 'Tháp đôi 43–54 tầng sát Ga Chùa Hà (<500m). Rất tiện đi lại nhưng chịu ngoại ứng tiếng ồn & giao thông dưới chân ga (+0.41%).'
+      },
+      {
+        id: 'P4', name: 'King Palace (108 Nguyễn Trãi)', district: 'Thanh Xuân',
+        lat: 20.9994, lon: 105.8118, stLat: 20.9988, stLon: 105.8132,
+        station: 'Ga Thượng Đình (Tuyến 2A)', price: 82.5, area: '96 m² (2PN)',
+        walk: 410, euclid: 310, zone: 'NEAR', floors: 36, twin: false,
+        desc: 'Nằm ngay mặt đường Nguyễn Trãi sát hành lang cầu cạn Tuyến 2A (<500m tới Ga Thượng Đình). Mức tăng ròng chỉ +0.41% do khấu trừ tiếng ồn.'
+      },
+      {
+        id: 'P5', name: 'Indochina Plaza - IPH (241 Xuân Thủy)', district: 'Cầu Giấy',
+        lat: 21.0364, lon: 105.7826, stLat: 21.0368, stLon: 105.7848,
+        station: 'Ga ĐH Quốc Gia (Tuyến 3)', price: 96.4, area: '110 m² (3PN)',
+        walk: 290, euclid: 220, zone: 'NEAR', floors: 35, twin: true,
+        desc: 'Nằm sát nút giao Xuân Thủy – Mai Dịch gần Ga ĐH Quốc Gia (290m). Mật độ giao thông dưới gầm cầu vượt rất lớn.'
+      },
+      {
+        id: 'P6', name: 'Mipec Rubik 360 (122 Xuân Thủy)', district: 'Cầu Giấy',
+        lat: 21.0388, lon: 105.7885, stLat: 21.0368, stLon: 105.7848,
+        station: 'Ga ĐH Quốc Gia (Tuyến 3)', price: 92.8, area: '76 m² (2PN)',
+        walk: 620, euclid: 470, zone: 'SWEET', floors: 35, twin: true,
+        desc: 'Lùi vào trong khuôn viên yên tĩnh cách Ga ĐH Quốc Gia 620m đi bộ, đạt mức thặng dư tối ưu +3.91%.'
+      },
+      {
+        id: 'P7', name: 'Vinhomes Metropolis (29 Liễu Giai)', district: 'Ba Đình',
+        lat: 21.0318, lon: 105.8152, stLat: 21.0310, stLon: 105.8168,
+        station: 'Ga Kim Mã (Tuyến 3)', price: 118.5, area: '112 m² (3PN)',
+        walk: 540, euclid: 410, zone: 'SWEET', floors: 45, twin: true,
+        desc: 'Tổ hợp tháp 45 tầng tại lõi Ba Đình (giá TB quận 99.1 tr/m²), tiếp cận Ga Kim Mã trong bán kính đi bộ vàng 540m (+3.91%).'
+      },
+      {
+        id: 'P8', name: 'Lancaster Núi Trúc', district: 'Ba Đình',
+        lat: 21.0292, lon: 105.8235, stLat: 21.0284, stLon: 105.8273,
+        station: 'Ga Cát Linh (Tuyến 2A & 3)', price: 112.4, area: '98 m² (2PN)',
+        walk: 640, euclid: 485, zone: 'SWEET', floors: 27, twin: false,
+        desc: 'Cách nút trung chuyển Ga Cát Linh 640m đi bộ qua phố Giảng Võ – Núi Trúc (+3.91%).'
+      },
+      {
+        id: 'P9', name: 'Seasons Avenue (KĐT Mỗ Lao)', district: 'Hà Đông',
+        lat: 20.9862, lon: 105.7878, stLat: 20.9845, stLon: 105.7946,
+        station: 'Ga Phùng Khoang (Tuyến 2A)', price: 66.2, area: '82 m² (2PN)',
+        walk: 740, euclid: 560, zone: 'SWEET', floors: 40, twin: true,
+        desc: 'Nằm trong KĐT Mỗ Lao yên tĩnh, đi bộ 740m ra Ga Phùng Khoang trên trục Trần Phú (+3.91%).'
+      },
+      {
+        id: 'P10', name: 'The Pride (Tố Hữu - La Khê)', district: 'Hà Đông',
+        lat: 20.9718, lon: 105.7605, stLat: 20.9635, stLon: 105.7646,
+        station: 'Ga La Khê (Tuyến 2A)', price: 58.4, area: '88 m² (2PN)',
+        walk: 890, euclid: 674, zone: 'SWEET', floors: 35, twin: true,
+        desc: 'Cách Ga La Khê 890m đi bộ dọc Lê Trọng Tấn. Nằm trong vành đai 500–1.000m tại quận Hà Đông (+3.91%).'
+      },
+      {
+        id: 'P11', name: 'KĐT Trung Hòa - Nhân Chính', district: 'Cầu Giấy',
+        lat: 21.0078, lon: 105.8045, stLat: 21.0065, stLon: 105.8164,
+        station: 'Ga Láng (Tuyến 2A)', price: 76.3, area: '70 m² (2PN)',
+        walk: 1250, euclid: 946, zone: 'BUFFER', floors: 24, twin: false,
+        desc: 'Cách Ga Láng 1.250m đi bộ (~15 phút). Nằm ở vùng đệm 1.000–1.500m, thặng dư giảm về +0.02%.'
+      },
+      {
+        id: 'P12', name: 'Khu Đô Thị Xa La', district: 'Hà Đông',
+        lat: 20.9612, lon: 105.7918, stLat: 20.9708, stLon: 105.7766,
+        station: 'Ga Hà Đông (Tuyến 2A)', price: 46.8, area: '63 m² (2PN)',
+        walk: 2100, euclid: 1590, zone: 'FAR', floors: 30, twin: true,
+        desc: 'Cách Ga Hà Đông 2.100m (>1.500m). Vượt quá ngưỡng đi bộ của cư dân Hà Nội, chuyển sang sử dụng xe máy cá nhân (0%).'
+      },
+      {
+        id: 'P13', name: 'Vinhomes Smart City (Tây Mỗ)', district: 'Nam Từ Liêm',
+        lat: 21.0042, lon: 105.7425, stLat: 21.0398, stLon: 105.7655,
+        station: 'Ga Cầu Diễn (Tuyến 3)', price: 74.5, area: '65 m² (2PN)',
+        walk: 3800, euclid: 2880, zone: 'FAR', floors: 38, twin: true,
+        desc: 'Nằm dọc Đại lộ Thăng Long, cách Ga Cầu Diễn 3.8km (>1.500m). Ngoài vùng phục vụ đi bộ của 2 tuyến Metro hiện hữu.'
+      }
+    ].map(p => {
+      const w = gpsToWorld(p.lat, p.lon);
+      const s = gpsToWorld(p.stLat, p.stLon);
+      return { ...p, x: w.x, z: w.z, sx: s.x, sz: s.z };
+    });
+
+    // Check if a world point (wx, wz) falls inside Hồ Tây or major lakes so no building spawns in water!
+    function isInsideWater(wx, wz) {
+      // Check Hồ Tây bounding box in world coords
+      const htMin = gpsToWorld(21.042, 105.806);
+      const htMax = gpsToWorld(21.073, 105.842);
+      if (wx >= htMin.x && wx <= htMax.x && wz <= htMin.z && wz >= htMax.z) return true;
+      // Check lakes
+      for (const lk of HANOI_LAKES) {
+        if (Math.hypot(wx - lk.x, wz - lk.z) < Math.max(lk.rx, lk.rz) + 1.2) return true;
+      }
+      return false;
+    }
+
+    const URBAN_BLOCKS = [];
+    let seed = 2026;
+    function sRand() { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }
+    STATIONS.forEach(st => {
+      for (let i = 0; i < 6; i++) {
+        const ang = sRand() * Math.PI * 2;
+        const distU = 2.6 + sRand() * 8.5;
+        const bx = st.x + Math.cos(ang) * distU;
+        const bz = st.z + Math.sin(ang) * distU;
+        if (isInsideWater(bx, bz)) continue;
+        const zone = distU < 4.2 ? 'NEAR' : (distU < 8.2 ? 'SWEET' : 'BUFFER');
+        URBAN_BLOCKS.push({
+          x: bx,
+          z: bz,
+          h: 2.0 + sRand() * 4.2,
+          w: 1.0 + sRand() * 0.45,
+          zone
+        });
+      }
+    });
+
+    // =========================================================================
+    // 5. STATE & UI HANDLERS
+    // =========================================================================
+    const state = {
+      step: 1,
+      mapTheme: 'earth',
+      selectedProject: PROJECTS[0],
+      selectedStation: null,
+      followTrain: false,
+      time: 0,
+      cam: {
+        tx: -1, ty: 1.5, tz: 3,
+        yaw: -0.22, pitch: 0.66, dist: 76,
+        goalTx: -1, goalTy: 1.5, goalTz: 3,
+        goalYaw: -0.22, goalPitch: 0.66, goalDist: 76
+      },
+      trains: [
+        { line: '2A', prog: 0.34, dir: 1, speed: 0.0014, color: '#10b981' },
+        { line: '2A', prog: 0.76, dir: -1, speed: 0.0014, color: '#10b981' },
+        { line: '3', prog: 0.25, dir: 1, speed: 0.0016, color: '#3b82f6' },
+        { line: '3', prog: 0.66, dir: -1, speed: 0.0016, color: '#3b82f6' }
+      ]
+    };
+
+    function setStep(n) {
+      state.step = n;
+      state.followTrain = false;
+      document.getElementById('btn-train').classList.remove('active-mode');
+      document.getElementById('train-label').textContent = 'Theo Tàu';
+
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`step-${i}`);
+        btn.className = (i === n) ? 'nav-btn active' : 'nav-btn';
+      }
+
+      const bTitle = document.getElementById('bar-title');
+      const bSub = document.getElementById('bar-sub');
+
+      if (n === 1) {
+        closeSheet();
+        bTitle.textContent = 'BƯỚC 1/4 • TOÀN CẢNH HÀ NỘI THEO TỌA ĐỘ OPENSTREETMAP';
+        bSub.textContent = 'Sông Hồng, Hồ Tây, Vành Đai 2–3, Đại lộ Thăng Long & 2 tuyến Metro';
+        state.cam.goalTx = -1; state.cam.goalTy = 1.5; state.cam.goalTz = 3;
+        state.cam.goalYaw = -0.20; state.cam.goalPitch = 0.68; state.cam.goalDist = 76;
+      } else if (n === 2) {
+        closeSheet();
+        bTitle.textContent = 'BƯỚC 2/4 • KHÚC CUA THỰC TẾ: HOÀNG CẦU – NGÃ TƯ SỞ – CẦU GIẤY';
+        bSub.textContent = 'Chạm vào bất kỳ nhà ga hoặc tòa nhà 3D nào để xem khoảng cách đi bộ GIS';
+        state.cam.goalTx = 7; state.cam.goalTy = 1.5; state.cam.goalTz = 1;
+        state.cam.goalYaw = -0.45; state.cam.goalPitch = 0.50; state.cam.goalDist = 42;
+      } else if (n === 3) {
+        closeSheet();
+        bTitle.textContent = 'BƯỚC 3/4 • QUY LUẬT CHỮ U NGƯỢC: ĐỈNH +3.91% Ở 500–1.000M';
+        bSub.textContent = 'Sát cầu cạn (<500m) chỉ +0.41% do tiếng ồn; 500–1.000m tăng mạnh +3.91% ***';
+        const rc = PROJECTS[0];
+        state.cam.goalTx = rc.sx + 3; state.cam.goalTy = 2.5; state.cam.goalTz = rc.sz;
+        state.cam.goalYaw = -0.32; state.cam.goalPitch = 0.44; state.cam.goalDist = 38;
+      } else if (n === 4) {
+        bTitle.textContent = 'BƯỚC 4/4 • ƯỚC TÍNH GIÁ CĂN HỘ THEO KHOẢNG CÁCH ĐI BỘ';
+        bSub.textContent = 'Thay đổi Quận, Diện tích và Cự ly đi bộ tới ga để tính thặng dư tàu điện';
+        openSheet('calc');
+      }
+    }
+
+    function toggleMapTheme() {
+      state.mapTheme = state.mapTheme === 'earth' ? 'osm' : 'earth';
+      const icon = document.getElementById('theme-icon');
+      const lbl = document.getElementById('theme-label');
+      if (state.mapTheme === 'osm') {
+        icon.textContent = '🌍';
+        lbl.textContent = 'Nền Google Earth';
+      } else {
+        icon.textContent = '🗺️';
+        lbl.textContent = 'Nền OSM';
+      }
+    }
+
+    function toggleTrainCam() {
+      state.followTrain = !state.followTrain;
+      const btn = document.getElementById('btn-train');
+      const lbl = document.getElementById('train-label');
+      if (state.followTrain) {
+        btn.classList.add('active-mode');
+        lbl.textContent = 'Đang Theo Tàu';
+        closeSheet();
+      } else {
+        btn.classList.remove('active-mode');
+        lbl.textContent = 'Theo Tàu';
+      }
+    }
+
+    function resetCamera() {
+      state.followTrain = false;
+      document.getElementById('btn-train').classList.remove('active-mode');
+      document.getElementById('train-label').textContent = 'Theo Tàu';
+      closeSheet();
+      state.cam.goalTx = -1; state.cam.goalTy = 1.5; state.cam.goalTz = 3;
+      state.cam.goalYaw = -0.22; state.cam.goalPitch = 0.66; state.cam.goalDist = 76;
+    }
+
+    function closeSheet() {
+      document.getElementById('info-sheet').classList.add('closed');
+      document.getElementById('bottom-bar').classList.remove('hidden-bar');
+    }
+
+    function openSheet(type) {
+      const sheet = document.getElementById('info-sheet');
+      const badge = document.getElementById('sheet-badge');
+      const content = document.getElementById('sheet-content');
+      sheet.classList.remove('closed');
+      if (window.innerWidth < 640) {
+        document.getElementById('bottom-bar').classList.add('hidden-bar');
+      }
+
+      if (type === 'project') {
+        const p = state.selectedProject;
+        badge.textContent = p.zone === 'SWEET'
+          ? '🎯 VÙNG ĐI BỘ TỐI ƯU 500–1.000M (+3.91%)'
+          : (p.zone === 'NEAR' ? '🔊 SÁT CẦU CẠN <500M (+0.41%)' : (p.zone === 'BUFFER' ? '⏳ VÙNG ĐỆM 1–1.5KM (+0.02%)' : '🛵 NGOÀI VÙNG ĐI BỘ >1.5KM (0%)'));
+
+        content.innerHTML = `
+          <div>
+            <div style="font-size:15px;font-weight:800;color:#ffffff;">${p.name}</div>
+            <div style="color:#94a3b8;margin-top:2px;">Quận ${p.district} • ${p.floors} tầng • Kết nối ${p.station}</div>
+          </div>
+          <div class="metric-grid">
+            <div class="metric-box">
+              <div class="metric-label">Giá chào bán</div>
+              <div class="metric-val" style="color:#34d399;">${p.price} tr/m²</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Đi bộ GIS</div>
+              <div class="metric-val" style="color:#38bdf8;">${p.walk} m</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Chim bay</div>
+              <div class="metric-val" style="color:#fb7185;">${p.euclid} m</div>
+            </div>
+          </div>
+          <div class="desc-box">${p.desc}</div>
+          <div>
+            <div style="color:#94a3b8;font-weight:600;margin-bottom:6px;">Chuyển nhanh tới dự án khác:</div>
+            <div class="chip-list">
+              ${PROJECTS.slice(0, 8).map(item => `
+                <button onclick="focusProject('${item.id}')" class="chip-btn ${item.id === p.id ? 'active' : ''}">
+                  ${item.name.split(' (')[0]}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if (type === 'station' && state.selectedStation) {
+        const st = state.selectedStation;
+        badge.textContent = st.line === '2A' ? '🟢 TUYẾN 2A CÁT LINH – HÀ ĐÔNG' : '🔵 TUYẾN 3 NHỔN – GA HÀ NỘI';
+        content.innerHTML = `
+          <div>
+            <div style="font-size:15px;font-weight:800;color:#ffffff;">${st.name}</div>
+            <div style="color:#94a3b8;margin-top:2px;">Tọa độ WGS84: ${st.lat.toFixed(4)}°N, ${st.lon.toFixed(4)}°E • ${st.elev > 1 ? 'Nhà ga trên cầu cạn' : 'Nhà ga ngầm'}</div>
+          </div>
+          <div class="desc-box" style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;justify-content:space-between;">
+              <span>🔊 Sát chân ga (&lt; 500m):</span>
+              <strong style="color:#38bdf8;">+0.41% (Ồn cầu cạn)</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;">
+              <span>🎯 Vành đai vàng (500 – 1.000m):</span>
+              <strong style="color:#34d399;">+3.91% *** (p &lt; 0.001)</strong>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      if (type === 'calc' || state.step === 4) {
+        badge.textContent = 'MÁY TÍNH ĐỊNH GIÁ HEDONIC (N = 16.471)';
+        content.innerHTML = `
+          <div class="calc-row">
+            <div>
+              <div style="color:#94a3b8;margin-bottom:4px;">Quận hành lang:</div>
+              <select id="c-dist" onchange="runCalc()" class="calc-select">
+                <option value="99.06">Ba Đình (TB 99.1 tr)</option>
+                <option value="83.39" selected>Cầu Giấy (TB 83.4 tr)</option>
+                <option value="81.55">Bắc Từ Liêm (TB 81.6 tr)</option>
+                <option value="81.27">Thanh Xuân (TB 81.3 tr)</option>
+                <option value="78.75">Đống Đa (TB 78.8 tr)</option>
+                <option value="76.68">Nam Từ Liêm (TB 76.7 tr)</option>
+                <option value="59.33">Hà Đông (TB 59.3 tr)</option>
+              </select>
+            </div>
+            <div>
+              <div style="color:#94a3b8;margin-bottom:4px;">Diện tích: <strong id="c-area-lbl" style="color:#fff;">85 m²</strong></div>
+              <input type="range" id="c-area" min="40" max="160" step="5" value="85" oninput="runCalc()" class="calc-range" style="margin-top:6px;">
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <span style="color:#94a3b8;">Cự ly đi bộ tới ga Metro:</span>
+              <strong id="c-walk-lbl" style="color:#34d399;">700 m (Tối ưu 500–1000m)</strong>
+            </div>
+            <input type="range" id="c-walk" min="150" max="2000" step="50" value="700" oninput="runCalc()" class="calc-range">
+          </div>
+          <div class="metric-grid" style="grid-template-columns:1fr 1fr;">
+            <div class="metric-box" style="border-color:rgba(16,185,129,0.4);">
+              <div class="metric-label">Đơn giá dự báo</div>
+              <div id="c-price" class="metric-val" style="color:#34d399;font-size:16px;">86.1 tr/m²</div>
+              <div id="c-total" style="color:#cbd5e1;margin-top:2px;">Tổng: 7.32 Tỷ VNĐ</div>
+            </div>
+            <div class="metric-box" style="border-color:rgba(16,185,129,0.4);">
+              <div class="metric-label">Giá trị tăng nhờ Metro</div>
+              <div id="c-prem" class="metric-val" style="color:#34d399;font-size:16px;">+3.91%</div>
+              <div id="c-add" style="color:#6ee7b7;margin-top:2px;">+275 Triệu VNĐ</div>
+            </div>
+          </div>
+        `;
+        runCalc();
+        return;
+      }
+
+      badge.textContent = 'BÁO CÁO KẾT QUẢ THỰC NGHIỆM (N = 16.471)';
+      content.innerHTML = `
+        <div>
+          <div style="font-size:14px;font-weight:800;color:#ffffff;">Hồi Quy Hedonic OLS (HC3) & Định Tuyến Đi Bộ GIS</div>
+          <div style="color:#cbd5e1;margin-top:4px;">
+            Phân tích <strong>16.471 căn hộ</strong> dọc Tuyến 2A (Cát Linh – Hà Đông) và Tuyến 3 (Nhổn – Ga Hà Nội), kiểm soát cố định 7 Quận (R² = 24.92%).
+          </div>
+        </div>
+        <div class="desc-box" style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span>🎯 <strong>Đi bộ tối ưu (500m – 1.000m):</strong></span>
+            <strong style="color:#34d399;font-size:13px;">+3.91% *** (t = 7.82)</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span>🔊 <strong>Sát cầu cạn (&lt; 500m):</strong> Ồn & ùn tắc</span>
+            <strong style="color:#38bdf8;">+0.41% (KYN)</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span>🛵 <strong>Ngoài tầm đi bộ (&gt; 1.500m):</strong></span>
+            <span style="color:#94a3b8;">0.00% (Nhóm cơ sở)</span>
+          </div>
+        </div>
+      `;
+    }
+
+    function focusProject(id) {
+      const p = PROJECTS.find(item => item.id === id);
+      if (!p) return;
+      state.selectedProject = p;
+      state.followTrain = false;
+      document.getElementById('btn-train').classList.remove('active-mode');
+      state.cam.goalTx = (p.x + p.sx) * 0.5;
+      state.cam.goalTy = 1.8;
+      state.cam.goalTz = (p.z + p.sz) * 0.5;
+      state.cam.goalDist = 26;
+      openSheet('project');
+    }
+
+    function runCalc() {
+      const base = Number(document.getElementById('c-dist')?.value || 83.39);
+      const area = Number(document.getElementById('c-area')?.value || 85);
+      const walk = Number(document.getElementById('c-walk')?.value || 700);
+
+      let beta = 0, zTxt = 'Ngoài vùng đi bộ (>1.5km)';
+      if (walk < 500) { beta = 0.0041; zTxt = 'Sát ga (<500m • Ồn)'; }
+      else if (walk <= 1000) { beta = 0.0383; zTxt = 'Tối ưu (500–1000m 🎯)'; }
+      else if (walk <= 1500) { beta = 0.0002; zTxt = 'Vùng đệm (1–1.5km)'; }
+
+      document.getElementById('c-area-lbl').textContent = `${area} m²`;
+      document.getElementById('c-walk-lbl').textContent = `${walk} m (${zTxt})`;
+
+      const uBase = base * Math.exp(0.0009 * (area - 90));
+      const uMetro = uBase * Math.exp(beta);
+      const total = (uMetro * area) / 1000;
+      const pct = (Math.exp(beta) - 1) * 100;
+      const add = Math.round((uMetro - uBase) * area);
+
+      document.getElementById('c-price').textContent = `${uMetro.toFixed(1)} tr/m²`;
+      document.getElementById('c-total').textContent = `Tổng: ${total.toFixed(2)} Tỷ VNĐ`;
+      document.getElementById('c-prem').textContent = `+${pct.toFixed(2)}%`;
+      document.getElementById('c-add').textContent = `+${add.toLocaleString()} Triệu VNĐ`;
+    }
+
+    // =========================================================================
+    // 6. ARCHITECTURAL 3D RENDERER (TOWER COMPLEXES, TRAINS & COLLISION-FREE LABELS)
+    // =========================================================================
+    const canvas = document.getElementById('canvas3d');
+    const ctx = canvas.getContext('2d');
+    let cw = window.innerWidth, ch = window.innerHeight;
+    let camPos = { x: 0, y: 50, z: 80 };
+    let camRight = { x: 1, y: 0, z: 0 }, camUp = { x: 0, y: 1, z: 0 }, camFwd = { x: 0, y: 0, z: -1 };
+    let hitBoxes = [];
+    let placedLabels = [];
+
+    function resize() {
+      cw = window.innerWidth;
+      ch = window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = cw * dpr;
+      canvas.height = ch * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function project(wx, wy, wz) {
+      const dx = wx - camPos.x, dy = wy - camPos.y, dz = wz - camPos.z;
+      const cz = dx * camFwd.x + dy * camFwd.y + dz * camFwd.z;
+      if (cz <= 1.8) return null;
+      const cx = dx * camRight.x + dy * camRight.y + dz * camRight.z;
+      const cy = dx * camUp.x + dy * camUp.y + dz * camUp.z;
+      const focal = Math.min(cw, ch) * 0.96;
+      const scale = focal / cz;
+      return { x: cw * 0.5 + cx * scale, y: ch * 0.5 - cy * scale, depth: cz, scale };
+    }
+
+    function tryDrawLabel(text, x, y, bgCol, textCol, borderCol, fontStr = '600 12px sans-serif', padX = 11, padY = 19) {
+      ctx.font = fontStr;
+      const w = ctx.measureText(text).width + padX;
+      const h = padY;
+      const left = x - w * 0.5;
+      const top = y - h * 0.5;
+
+      if (top < 56 || top + h > ch - 72 || left < 8 || left + w > cw - 8) return false;
+
+      for (let i = 0; i < placedLabels.length; i++) {
+        const b = placedLabels[i];
+        if (left < b.r + 5 && left + w + 5 > b.l && top < b.b + 4 && top + h + 4 > b.t) {
+          return false;
+        }
+      }
+
+      placedLabels.push({ l: left, r: left + w, t: top, b: top + h });
+
+      if (bgCol) {
+        ctx.fillStyle = bgCol;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(left, top, w, h, 6);
+        else ctx.rect(left, top, w, h);
+        ctx.fill();
+      }
+      if (borderCol) {
+        ctx.strokeStyle = borderCol;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+      ctx.fillStyle = textCol;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, x, y + 0.5);
+      return true;
+    }
+
+    function drawOrientedBox3D(wx, wy, wz, tx, tz, length, height, width, palette, opts = {}) {
+      const hl = length * 0.5;
+      const hw = width * 0.5;
+      const nx = -tz, nz = tx;
+
+      const corners = [
+        { x: wx + tx * hl + nx * hw, z: wz + tz * hl + nz * hw },
+        { x: wx + tx * hl - nx * hw, z: wz + tz * hl - nz * hw },
+        { x: wx - tx * hl - nx * hw, z: wz - tz * hl - nz * hw },
+        { x: wx - tx * hl + nx * hw, z: wz - tz * hl + nz * hw }
+      ];
+
+      const bPts = corners.map(c => project(c.x, wy, c.z));
+      const tPts = corners.map(c => project(c.x, wy + height, c.z));
+      if (bPts.some(p => !p) || tPts.some(p => !p)) return null;
+
+      if (opts.shadow && wy <= 0.1) {
+        const sPts = corners.map(c => project(c.x + 0.4, 0.02, c.z + 0.4));
+        if (sPts.every(p => p)) {
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.30)';
+          ctx.beginPath();
+          ctx.moveTo(sPts[0].x, sPts[0].y);
+          ctx.lineTo(sPts[1].x, sPts[1].y);
+          ctx.lineTo(sPts[2].x, sPts[2].y);
+          ctx.lineTo(sPts[3].x, sPts[3].y);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      const sideDefs = [
+        { i0: 0, i1: 1, col: palette.front, fnx: tx, fnz: tz },
+        { i0: 1, i1: 2, col: palette.right, fnx: -nx, fnz: -nz },
+        { i0: 2, i1: 3, col: palette.back, fnx: -tx, fnz: -tz },
+        { i0: 3, i1: 0, col: palette.left, fnx: nx, fnz: nz }
+      ];
+
+      const visibleSides = [];
+      sideDefs.forEach(sd => {
+        const mx = (corners[sd.i0].x + corners[sd.i1].x) * 0.5;
+        const mz = (corners[sd.i0].z + corners[sd.i1].z) * 0.5;
+        const my = wy + height * 0.5;
+        const vx = mx - camPos.x, vz = mz - camPos.z;
+        if (vx * sd.fnx + vz * sd.fnz < 0) {
+          const distSq = vx * vx + (my - camPos.y) * (my - camPos.y) + vz * vz;
+          visibleSides.push({ ...sd, distSq });
+        }
+      });
+
+      visibleSides.sort((a, b) => b.distSq - a.distSq);
+
+      ctx.lineWidth = opts.highlight ? 1.8 : 0.7;
+      ctx.strokeStyle = opts.highlight ? '#ffffff' : (palette.stroke || 'rgba(255,255,255,0.22)');
+
+      visibleSides.forEach(sd => {
+        const bA = bPts[sd.i0], bB = bPts[sd.i1], tB = tPts[sd.i1], tA = tPts[sd.i0];
+        ctx.fillStyle = sd.col;
+        ctx.beginPath();
+        ctx.moveTo(bA.x, bA.y);
+        ctx.lineTo(bB.x, bB.y);
+        ctx.lineTo(tB.x, tB.y);
+        ctx.lineTo(tA.x, tA.y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Detailed Illuminated Curtain-Wall Windows for Apartment Towers
+        if (opts.windows && height > 2.4) {
+          const numFloors = Math.min(11, Math.floor(height * 1.15));
+          ctx.save();
+          // Vertical Architectural Mullions (2 columns)
+          ctx.strokeStyle = 'rgba(15, 23, 42, 0.25)';
+          ctx.lineWidth = 0.8;
+          for (let cIdx = 1; cIdx <= 2; cIdx++) {
+            const cr = cIdx / 3;
+            const bx = bA.x + (bB.x - bA.x) * cr, by = bA.y + (bB.y - bA.y) * cr;
+            const tx2 = tA.x + (tB.x - tA.x) * cr, ty2 = tA.y + (tB.y - tA.y) * cr;
+            ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(tx2, ty2); ctx.stroke();
+          }
+
+          // Horizontal Floor Bands
+          ctx.strokeStyle = opts.windowColor || 'rgba(255, 255, 255, 0.34)';
+          ctx.lineWidth = 0.9;
+          for (let f = 1; f < numFloors; f++) {
+            const r = f / numFloors;
+            const lx1 = bA.x + (tA.x - bA.x) * r;
+            const ly1 = bA.y + (tA.y - bA.y) * r;
+            const lx2 = bB.x + (tB.x - bB.x) * r;
+            const ly2 = bB.y + (tB.y - bB.y) * r;
+            const ix1 = lx1 + (lx2 - lx1) * 0.12, iy1 = ly1 + (ly2 - ly1) * 0.12;
+            const ix2 = lx1 + (lx2 - lx1) * 0.88, iy2 = ly1 + (ly2 - ly1) * 0.88;
+            ctx.beginPath();
+            ctx.moveTo(ix1, iy1);
+            ctx.lineTo(ix2, iy2);
+            ctx.stroke();
+          }
+          ctx.restore();
+        }
+
+        // Metro Train Car Panoramic Windows & Livery Band
+        if (opts.isTrainCar && (sd.i0 === 1 || sd.i0 === 3)) {
+          // Dark Panoramic Window Band
+          const wA1x = bA.x + (tA.x - bA.x) * 0.45, wA1y = bA.y + (tA.y - bA.y) * 0.45;
+          const wB1x = bB.x + (tB.x - bB.x) * 0.45, wB1y = bB.y + (tB.y - bB.y) * 0.45;
+          const wA2x = bA.x + (tA.x - bA.x) * 0.80, wA2y = bA.y + (tA.y - bA.y) * 0.80;
+          const wB2x = bB.x + (tB.x - bB.x) * 0.80, wB2y = bB.y + (tB.y - bB.y) * 0.80;
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.moveTo(wA1x, wA1y); ctx.lineTo(wB1x, wB1y);
+          ctx.lineTo(wB2x, wB2y); ctx.lineTo(wA2x, wA2y);
+          ctx.closePath();
+          ctx.fill();
+
+          // Colored Livery Stripe below window
+          const sA1x = bA.x + (tA.x - bA.x) * 0.25, sA1y = bA.y + (tA.y - bA.y) * 0.25;
+          const sB1x = bB.x + (tB.x - bB.x) * 0.25, sB1y = bB.y + (tB.y - bB.y) * 0.25;
+          ctx.strokeStyle = opts.liveryColor || '#10b981';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(sA1x, sA1y);
+          ctx.lineTo(sB1x, sB1y);
+          ctx.stroke();
+        }
+      });
+
+      if (camPos.y > wy + height) {
+        ctx.fillStyle = opts.highlight ? '#ffffff' : palette.top;
+        ctx.beginPath();
+        ctx.moveTo(tPts[0].x, tPts[0].y);
+        ctx.lineTo(tPts[1].x, tPts[1].y);
+        ctx.lineTo(tPts[2].x, tPts[2].y);
+        ctx.lineTo(tPts[3].x, tPts[3].y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // If Metro Train Car: draw roof livery stripe + rooftop AC unit pod so each car is unmistakably a train!
+        if (opts.isTrainCar) {
+          const rA = { x: (tPts[0].x + tPts[1].x) * 0.5, y: (tPts[0].y + tPts[1].y) * 0.5 };
+          const rB = { x: (tPts[3].x + tPts[2].x) * 0.5, y: (tPts[3].y + tPts[2].y) * 0.5 };
+          ctx.strokeStyle = opts.liveryColor || '#10b981';
+          ctx.lineWidth = 2.6;
+          ctx.beginPath();
+          ctx.moveTo(rA.x, rA.y);
+          ctx.lineTo(rB.x, rB.y);
+          ctx.stroke();
+
+          // Dark rooftop HVAC pod in center of car roof
+          const rcX = (tPts[0].x + tPts[2].x) * 0.5;
+          const rcY = (tPts[0].y + tPts[2].y) * 0.5;
+          ctx.fillStyle = '#334155';
+          ctx.beginPath();
+          ctx.arc(rcX, rcY, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      const roofCenterX = (tPts[0].x + tPts[2].x) * 0.5;
+      const roofCenterY = (tPts[0].y + tPts[2].y) * 0.5;
+      const baseCenterY = (bPts[0].y + bPts[2].y) * 0.5;
+
+      return {
+        x: roofCenterX,
+        y: (roofCenterY + baseCenterY) * 0.5,
+        roofX: roofCenterX,
+        roofY: roofCenterY,
+        r: Math.max(15, Math.hypot(tPts[2].x - bPts[0].x, tPts[2].y - bPts[0].y) * 0.48),
+        depth: (tPts[0].depth + bPts[2].depth) * 0.5
+      };
+    }
+
+    function drawWorldRibbonPolygon(spline, halfWidthWorld, wy, fillCol, strokeCol) {
+      const leftBank = [];
+      const rightBank = [];
+      for (let i = 0; i < spline.length; i++) {
+        const pt = spline[i];
+        const lP = project(pt.x + pt.nx * halfWidthWorld, wy, pt.z + pt.nz * halfWidthWorld);
+        const rP = project(pt.x - pt.nx * halfWidthWorld, wy, pt.z - pt.nz * halfWidthWorld);
+        if (lP && rP) {
+          leftBank.push(lP);
+          rightBank.push(rP);
+        }
+      }
+      if (leftBank.length < 2) return;
+
+      ctx.beginPath();
+      leftBank.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+      for (let i = rightBank.length - 1; i >= 0; i--) {
+        ctx.lineTo(rightBank[i].x, rightBank[i].y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = fillCol;
+      ctx.fill();
+      if (strokeCol) {
+        ctx.strokeStyle = strokeCol;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+    }
+
+    function drawGroundPolyline(pts, wy, color, widthPx, casingColor = null, dash = []) {
+      const screenPts = [];
+      for (let i = 0; i < pts.length; i++) {
+        const sp = project(pts[i].x, wy, pts[i].z);
+        if (sp) screenPts.push(sp);
+      }
+      if (screenPts.length < 2) return;
+
+      ctx.save();
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      if (dash.length) ctx.setLineDash(dash);
+
+      if (casingColor) {
+        ctx.strokeStyle = casingColor;
+        ctx.lineWidth = widthPx + 2.0;
+        ctx.beginPath();
+        screenPts.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+        ctx.stroke();
+      }
+      ctx.strokeStyle = color;
+      ctx.lineWidth = widthPx;
+      ctx.beginPath();
+      screenPts.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawGroundEllipse(wx, wy, wz, rx, rz, fillStyle, strokeStyle = null) {
+      const segs = 28;
+      ctx.beginPath();
+      let started = false;
+      for (let i = 0; i <= segs; i++) {
+        const a = (i / segs) * Math.PI * 2;
+        const p = project(wx + Math.cos(a) * rx, wy, wz + Math.sin(a) * rz);
+        if (p) {
+          if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+          else ctx.lineTo(p.x, p.y);
+        }
+      }
+      if (!started) return;
+      ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      if (strokeStyle) { ctx.strokeStyle = strokeStyle; ctx.lineWidth = 1.2; ctx.stroke(); }
+    }
+
+    function sampleSpline(spline, prog) {
+      const total = spline.length - 1;
+      const exact = Math.max(0, Math.min(total - 0.001, prog * total));
+      const idx = Math.floor(exact);
+      const frac = exact - idx;
+      const a = spline[idx], b = spline[idx + 1];
+      return {
+        x: a.x + (b.x - a.x) * frac,
+        y: a.elev + (b.elev - a.elev) * frac,
+        z: a.z + (b.z - a.z) * frac,
+        tx: a.tx, tz: a.tz,
+        nx: a.nx, nz: a.nz
+      };
+    }
+
+    const TOWER_PALETTES = {
+      SWEET: { top: '#6ee7b7', front: '#10b981', right: '#059669', back: '#047857', left: '#0d9488', stroke: 'rgba(167, 243, 208, 0.55)' },
+      NEAR:  { top: '#93c5fd', front: '#3b82f6', right: '#2563eb', back: '#1d4ed8', left: '#0284c7', stroke: 'rgba(191, 219, 254, 0.55)' },
+      BUFFER:{ top: '#fcd34d', front: '#f59e0b', right: '#d97706', back: '#b45309', left: '#ea580c', stroke: 'rgba(253, 230, 138, 0.5)' },
+      FAR:   { top: '#fda4af', front: '#f43f5e', right: '#e11d48', back: '#be123c', left: '#db2777', stroke: 'rgba(254, 205, 211, 0.5)' }
+    };
+
+    // =========================================================================
+    // 7. MAIN 60FPS RENDER LOOP
+    // =========================================================================
+    function render() {
+      state.time += 0.016;
+      hitBoxes = [];
+      placedLabels = [];
+      const isOSM = state.mapTheme === 'osm';
+
+      state.trains.forEach(tr => {
+        tr.prog += tr.dir * tr.speed;
+        if (tr.prog >= 0.96) { tr.prog = 0.96; tr.dir = -1; }
+        if (tr.prog <= 0.04) { tr.prog = 0.04; tr.dir = 1; }
+      });
+
+      const c = state.cam;
+      if (state.followTrain) {
+        const tp = sampleSpline(LINE_2A_SPLINE, state.trains[0].prog);
+        c.goalTx = tp.x; c.goalTy = tp.y + 1.2; c.goalTz = tp.z;
+        c.goalDist = 22; c.goalPitch = 0.42;
+        c.goalYaw += 0.0025;
+      }
+
+      c.tx += (c.goalTx - c.tx) * 0.085;
+      c.ty += (c.goalTy - c.ty) * 0.085;
+      c.tz += (c.goalTz - c.tz) * 0.085;
+      c.yaw += (c.goalYaw - c.yaw) * 0.085;
+      c.pitch = Math.max(0.24, Math.min(1.35, c.pitch + (c.goalPitch - c.pitch) * 0.085));
+      c.dist = Math.max(15, Math.min(145, c.dist + (c.goalDist - c.dist) * 0.085));
+
+      camPos.x = c.tx - Math.sin(c.yaw) * Math.cos(c.pitch) * c.dist;
+      camPos.y = c.ty + Math.sin(c.pitch) * c.dist;
+      camPos.z = c.tz + Math.cos(c.yaw) * Math.cos(c.pitch) * c.dist;
+
+      const fx = c.tx - camPos.x, fy = c.ty - camPos.y, fz = c.tz - camPos.z;
+      const fl = Math.hypot(fx, fy, fz) || 1;
+      camFwd = { x: fx / fl, y: fy / fl, z: fz / fl };
+      const rl = Math.hypot(-camFwd.z, 0, camFwd.x) || 1;
+      camRight = { x: -camFwd.z / rl, y: 0, z: camFwd.x / rl };
+      camUp = {
+        x: camRight.y * camFwd.z - camRight.z * camFwd.y,
+        y: camRight.z * camFwd.x - camRight.x * camFwd.z,
+        z: camRight.x * camFwd.y - camRight.y * camFwd.x
+      };
+
+      // 1. BACKGROUND SKY / SURFACE
+      if (isOSM) {
+        ctx.fillStyle = '#f2efe9';
+        ctx.fillRect(0, 0, cw, ch);
+      } else {
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, ch);
+        bgGrad.addColorStop(0, '#040914');
+        bgGrad.addColorStop(0.5, '#091526');
+        bgGrad.addColorStop(1, '#0d1f36');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, cw, ch);
+      }
+
+      // 2. SUBTLE WGS84 COORDINATE GRID
+      ctx.strokeStyle = isOSM ? 'rgba(148, 163, 184, 0.2)' : 'rgba(56, 189, 248, 0.06)';
+      ctx.lineWidth = 1;
+      for (let g = -80; g <= 80; g += 8) {
+        const p1 = project(g, 0, -80), p2 = project(g, 0, 80);
+        if (p1 && p2) { ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); }
+        const q1 = project(-80, 0, g), q2 = project(80, 0, g);
+        if (q1 && q2) { ctx.beginPath(); ctx.moveTo(q1.x, q1.y); ctx.lineTo(q2.x, q2.y); ctx.stroke(); }
+      }
+
+      // 3. GREEN PARKS
+      const parkFill = isOSM ? '#c8facc' : 'rgba(16, 185, 129, 0.10)';
+      const parkStroke = isOSM ? '#86efac' : 'rgba(16, 185, 129, 0.25)';
+      HANOI_PARKS.forEach(pk => {
+        drawGroundEllipse(pk.x, 0.02, pk.z, pk.rx, pk.rz, parkFill, parkStroke);
+      });
+
+      // 4. RIVERS & LAKES
+      const waterFill = isOSM ? '#aad3df' : 'rgba(14, 165, 233, 0.26)';
+      const waterStroke = isOSM ? '#7ab8cc' : 'rgba(56, 189, 248, 0.45)';
+
+      drawWorldRibbonPolygon(RED_RIVER_SPLINE, 2.8, 0.03, waterFill, waterStroke);
+      drawWorldRibbonPolygon(TO_LICH_RIVER, 0.22, 0.03, waterFill, null);
+      drawWorldRibbonPolygon(NHUE_RIVER, 0.30, 0.03, waterFill, null);
+      drawWorldRibbonPolygon(DAY_RIVER, 0.35, 0.03, waterFill, null);
+
+      ctx.beginPath();
+      let htStart = false;
+      HO_TAY_POLY.forEach(wPt => {
+        const sp = project(wPt.x, 0.04, wPt.z);
+        if (sp) { if (!htStart) { ctx.moveTo(sp.x, sp.y); htStart = true; } else ctx.lineTo(sp.x, sp.y); }
+      });
+      if (htStart) {
+        ctx.closePath();
+        ctx.fillStyle = waterFill; ctx.fill();
+        ctx.strokeStyle = waterStroke; ctx.lineWidth = 1.4; ctx.stroke();
+      }
+
+      HANOI_LAKES.forEach(lk => {
+        drawGroundEllipse(lk.x, 0.04, lk.z, lk.rx, lk.rz, waterFill, waterStroke);
+      });
+
+      // 5. OPENSTREETMAP / GOOGLE EARTH ROAD NETWORK
+      OSM_ROADS.forEach(rd => {
+        if (rd.type === 'motorway') {
+          drawGroundPolyline(rd.pts, 0.06, isOSM ? '#f9b29c' : 'rgba(245, 158, 11, 0.42)', 4.2, isOSM ? '#e07a5f' : 'rgba(251, 191, 36, 0.2)');
+        } else if (rd.type === 'primary') {
+          drawGroundPolyline(rd.pts, 0.05, isOSM ? '#fcd6a4' : 'rgba(148, 163, 184, 0.28)', 3.0, isOSM ? '#dfb070' : null);
+        } else {
+          drawGroundPolyline(rd.pts, 0.04, isOSM ? '#ffffff' : 'rgba(100, 116, 139, 0.22)', 2.0, isOSM ? '#cbd5e1' : null);
+        }
+      });
+
+      // 6. TOD SWEET SPOT RING AROUND SELECTED PROJECT'S STATION
+      if (state.selectedProject) {
+        const sp = state.selectedProject;
+        drawGroundEllipse(sp.sx, 0.08, sp.sz, 7.8, 7.8, 'rgba(16, 185, 129, 0.13)', '#10b981');
+        drawGroundEllipse(sp.sx, 0.09, sp.sz, 4.0, 4.0, 'rgba(59, 130, 246, 0.11)', '#3b82f6');
+      }
+
+      // 7. 3D CURVED METRO VIADUCTS
+      function drawViaduct3D(spline, mainColor) {
+        drawGroundPolyline(spline, 0.09, 'rgba(0, 0, 0, 0.30)', 5.0);
+
+        for (let i = 0; i < spline.length; i += 3) {
+          const pt = spline[i];
+          if (pt.elev <= 0.6) continue;
+          const gP = project(pt.x, 0, pt.z);
+          const tP = project(pt.x, pt.elev, pt.z);
+          if (gP && tP) {
+            ctx.strokeStyle = isOSM ? '#64748b' : 'rgba(148, 163, 184, 0.72)';
+            ctx.lineWidth = Math.max(1.6, 120 / tP.depth);
+            ctx.beginPath();
+            ctx.moveTo(gP.x, gP.y);
+            ctx.lineTo(tP.x, tP.y);
+            ctx.stroke();
+          }
+        }
+
+        const elevPts = [];
+        const underPts = [];
+        spline.forEach(pt => {
+          const sp = project(pt.x, pt.elev, pt.z);
+          if (!sp) return;
+          if (pt.elev > 0.6) elevPts.push(sp);
+          else underPts.push(sp);
+        });
+
+        if (elevPts.length > 1) {
+          ctx.save();
+          ctx.lineJoin = 'round';
+          ctx.lineCap = 'round';
+
+          ctx.strokeStyle = isOSM ? '#475569' : '#1e293b';
+          ctx.lineWidth = 6.5;
+          ctx.beginPath();
+          elevPts.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+          ctx.stroke();
+
+          ctx.strokeStyle = mainColor;
+          ctx.lineWidth = 3.8;
+          ctx.beginPath();
+          elevPts.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+          ctx.stroke();
+
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+          ctx.lineWidth = 1.0;
+          ctx.beginPath();
+          elevPts.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        if (underPts.length > 1) {
+          ctx.save();
+          ctx.strokeStyle = mainColor;
+          ctx.lineWidth = 3.0;
+          ctx.setLineDash([5, 4]);
+          ctx.beginPath();
+          underPts.forEach((p, idx) => { if (idx === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      drawViaduct3D(LINE_2A_SPLINE, '#10b981');
+      drawViaduct3D(LINE_3_SPLINE, '#3b82f6');
+
+      // 8. DEPTH-SORTED 3D OBJECTS
+      const renderQueue = [];
+      const pendingLabels = [];
+
+      // 8A. Background Urban Fabric Towers
+      URBAN_BLOCKS.forEach(b => {
+        const pt = project(b.x, b.h * 0.5, b.z);
+        if (!pt) return;
+        const pal = isOSM
+          ? { top: '#e2e8f0', front: '#cbd5e1', right: '#94a3b8', back: '#64748b', left: '#94a3b8', stroke: 'rgba(100,116,139,0.35)' }
+          : (b.zone === 'SWEET'
+            ? { top: '#059669', front: '#047857', right: '#065f46', back: '#064e3b', left: '#065f46', stroke: 'rgba(52,211,153,0.28)' }
+            : { top: '#334155', front: '#1e293b', right: '#0f172a', back: '#090d16', left: '#1e293b', stroke: 'rgba(148,163,184,0.2)' });
+
+        renderQueue.push({
+          depth: pt.depth,
+          draw: () => drawOrientedBox3D(b.x, 0, b.z, 1, 0, b.w, b.h, b.w, pal, { shadow: true, windows: true, windowColor: isOSM ? 'rgba(71,85,105,0.25)' : 'rgba(148,163,184,0.18)' })
+        });
+      });
+
+      // 8B. 23 Oriented 3D Metro Stations (Sleek Dark Architectural Canopy + Glowing Line Trim)
+      STATIONS.forEach(st => {
+        const pt = project(st.x, st.elev, st.z);
+        if (!pt) return;
+        const pal = st.line === '2A'
+          ? { top: '#1e293b', front: '#065f46', right: '#0f172a', back: '#065f46', left: '#0f172a', stroke: '#34d399' }
+          : { top: '#1e293b', front: '#1e40af', right: '#0f172a', back: '#1e40af', left: '#0f172a', stroke: '#60a5fa' };
+
+        renderQueue.push({
+          depth: pt.depth - 0.6,
+          draw: () => {
+            const box = drawOrientedBox3D(st.x, st.elev - 0.32, st.z, st.tx, st.tz, 2.35, 0.78, 1.28, pal, { highlight: false });
+            if (!box) return;
+            hitBoxes.push({ x: box.x, y: box.y, r: box.r + 5, depth: box.depth, type: 'station', data: st });
+
+            ctx.fillStyle = st.line === '2A' ? '#10b981' : '#3b82f6';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(box.roofX, box.roofY - 3, 4.0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            if (st.major || box.depth < 46) {
+              pendingLabels.push({
+                priority: st.major ? 3 : 5,
+                text: st.name,
+                x: box.roofX,
+                y: box.roofY - 16,
+                bg: isOSM ? 'rgba(255,255,255,0.92)' : 'rgba(15,23,42,0.88)',
+                fg: isOSM ? '#0f172a' : '#f8fafc',
+                border: st.line === '2A' ? 'rgba(16,185,129,0.6)' : 'rgba(59,130,246,0.6)',
+                font: '600 12px sans-serif'
+              });
+            }
+          }
+        });
+      });
+
+      // 8C. Streamlined 4-Car Articulated 3D Metro Trains (Distinct Separated Cars + Roof AC Pods + Livery!)
+      state.trains.forEach(tr => {
+        const spline = tr.line === '2A' ? LINE_2A_SPLINE : LINE_3_SPLINE;
+        const trainPal = tr.line === '2A'
+          ? { top: '#ffffff', front: '#059669', right: '#f1f5f9', back: '#059669', left: '#ffffff', stroke: '#10b981' }
+          : { top: '#ffffff', front: '#2563eb', right: '#f1f5f9', back: '#2563eb', left: '#ffffff', stroke: '#3b82f6' };
+
+        for (let car = -1.5; car <= 1.5; car += 1.0) {
+          const pCar = Math.max(0.01, Math.min(0.99, tr.prog + car * 0.022));
+          const pos = sampleSpline(spline, pCar);
+          const pt = project(pos.x, pos.y + 0.5, pos.z);
+          if (!pt) continue;
+
+          const isLeadCar = (tr.dir > 0 && car === 1.5) || (tr.dir < 0 && car === -1.5);
+
+          renderQueue.push({
+            depth: pt.depth - 1.2,
+            draw: () => {
+              drawOrientedBox3D(pos.x, pos.y + 0.16, pos.z, pos.tx, pos.tz, 1.32, 0.70, 0.78, trainPal, {
+                highlight: false,
+                isTrainCar: true,
+                liveryColor: tr.color
+              });
+
+              if (isLeadCar) {
+                const dirSign = tr.dir > 0 ? 1 : -1;
+                const h1 = project(pos.x + pos.tx * dirSign * 0.75, pos.y + 0.42, pos.z + pos.tz * dirSign * 0.75);
+                const h2 = project(pos.x + pos.tx * dirSign * 3.4 + pos.nx * 0.85, pos.y + 0.2, pos.z + pos.tz * dirSign * 3.4 + pos.nz * 0.85);
+                const h3 = project(pos.x + pos.tx * dirSign * 3.4 - pos.nx * 0.85, pos.y + 0.2, pos.z + pos.tz * dirSign * 3.4 - pos.nz * 0.85);
+                if (h1 && h2 && h3) {
+                  ctx.fillStyle = 'rgba(254, 240, 138, 0.38)';
+                  ctx.beginPath();
+                  ctx.moveTo(h1.x, h1.y);
+                  ctx.lineTo(h2.x, h2.y);
+                  ctx.lineTo(h3.x, h3.y);
+                  ctx.closePath();
+                  ctx.fill();
+                }
+              }
+            }
+          });
+        }
+      });
+
+      // 8D. Featured Architectural 3D Apartment Complexes (Twin-Tower / Single-Tower with Podium & Windows)
+      PROJECTS.forEach(p => {
+        const isSel = state.selectedProject && state.selectedProject.id === p.id;
+        const h = state.step === 3
+          ? (p.zone === 'SWEET' ? 11.2 : (p.zone === 'NEAR' ? 4.2 : 2.2))
+          : 4.5 + Math.min(6.8, (p.price - 42) * 0.095);
+        const pt = project(p.x, h * 0.5, p.z);
+        if (!pt) return;
+
+        const pal = TOWER_PALETTES[p.zone] || TOWER_PALETTES.FAR;
+
+        renderQueue.push({
+          depth: pt.depth - 0.9,
+          draw: () => {
+            if (p.twin) {
+              // Shared Commercial Podium Base for Twin-Tower Complex
+              drawOrientedBox3D(p.x, 0, p.z, 1, 0, 2.8, 1.05, 1.9, pal, { shadow: true });
+              // Tower A (Secondary Wing)
+              drawOrientedBox3D(p.x - 0.65, 1.05, p.z, 1, 0, 1.15, (h - 1.05) * 0.86, 1.35, pal, {
+                highlight: isSel,
+                windows: true,
+                windowColor: 'rgba(255, 255, 255, 0.36)'
+              });
+              // Tower B (Main Tall Wing)
+              const box = drawOrientedBox3D(p.x + 0.65, 1.05, p.z, 1, 0, 1.25, h - 1.05, 1.45, pal, {
+                highlight: isSel,
+                windows: true,
+                windowColor: 'rgba(255, 255, 255, 0.42)'
+              });
+              if (!box) return;
+              const crown = drawOrientedBox3D(p.x + 0.65, h, p.z, 1, 0, 0.85, 0.55, 0.95, pal, { highlight: isSel });
+              const topX = crown ? crown.roofX : box.roofX;
+              const topY = crown ? crown.roofY : box.roofY;
+
+              hitBoxes.push({ x: box.x, y: box.y, r: box.r + 8, depth: box.depth, type: 'project', data: p });
+
+              if (isSel || box.depth < 66) {
+                pendingLabels.push({
+                  priority: isSel ? 1 : 2,
+                  text: isSel ? `★ ${p.name.split(' (')[0]} • ${p.price}tr/m²` : `${p.name.split(' (')[0]} (${p.price}tr)`,
+                  x: topX,
+                  y: topY - 14,
+                  bg: isSel ? '#10b981' : 'rgba(15, 23, 42, 0.92)',
+                  fg: isSel ? '#022c22' : '#ffffff',
+                  border: isSel ? '#ffffff' : pal.front,
+                  font: isSel ? 'bold 12px sans-serif' : '600 12px sans-serif'
+                });
+              }
+            } else {
+              // Single Landmark Tower with Podium & Penthouse Crown
+              drawOrientedBox3D(p.x, 0, p.z, 1, 0, 2.2, 1.05, 2.2, pal, { shadow: true });
+              const box = drawOrientedBox3D(p.x, 1.05, p.z, 1, 0, 1.65, h - 1.05, 1.65, pal, {
+                highlight: isSel,
+                windows: true,
+                windowColor: 'rgba(255, 255, 255, 0.40)'
+              });
+              if (!box) return;
+              const crown = drawOrientedBox3D(p.x, h, p.z, 1, 0, 1.05, 0.60, 1.05, pal, { highlight: isSel });
+              const topX = crown ? crown.roofX : box.roofX;
+              const topY = crown ? crown.roofY : box.roofY;
+
+              hitBoxes.push({ x: box.x, y: box.y, r: box.r + 6, depth: box.depth, type: 'project', data: p });
+
+              if (isSel || box.depth < 66) {
+                pendingLabels.push({
+                  priority: isSel ? 1 : 2,
+                  text: isSel ? `★ ${p.name.split(' (')[0]} • ${p.price}tr/m²` : `${p.name.split(' (')[0]} (${p.price}tr)`,
+                  x: topX,
+                  y: topY - 14,
+                  bg: isSel ? '#10b981' : 'rgba(15, 23, 42, 0.92)',
+                  fg: isSel ? '#022c22' : '#ffffff',
+                  border: isSel ? '#ffffff' : pal.front,
+                  font: isSel ? 'bold 12px sans-serif' : '600 12px sans-serif'
+                });
+              }
+            }
+          }
+        });
+      });
+
+      renderQueue.sort((a, b) => b.depth - a.depth);
+      renderQueue.forEach(item => item.draw());
+
+      // 9. SELECTED BUILDING GIS WALKING ROUTE
+      if (state.selectedProject) {
+        const p = state.selectedProject;
+        const bPt = project(p.x, 0.2, p.z);
+        const midPt = project(p.sx, 0.2, p.z);
+        const sPt = project(p.sx, 0.2, p.sz);
+        if (bPt && midPt && sPt) {
+          ctx.save();
+          ctx.strokeStyle = '#10b981';
+          ctx.lineWidth = 3.2;
+          ctx.beginPath();
+          ctx.moveTo(bPt.x, bPt.y);
+          ctx.lineTo(midPt.x, midPt.y);
+          ctx.lineTo(sPt.x, sPt.y);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      // 10. STEP 3 HOLOGRAPHIC INVERTED-U CURVE
+      if (state.step === 3 && state.selectedProject) {
+        const ox = state.selectedProject.sx, oz = state.selectedProject.sz;
+        ctx.save();
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        let peak = null;
+        for (let r = 0; r <= 16; r++) {
+          const dm = r * 100;
+          const hy = dm < 500 ? 1.8 + (dm / 500) * 4.0 : (dm <= 1000 ? 13.8 - Math.pow((dm - 750) / 250, 2) * 3.2 : Math.max(1, 10 * (1 - (dm - 1000) / 600)));
+          const pt = project(ox + r * 0.85, hy, oz + r * 0.28);
+          if (pt) {
+            if (r === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+            if (r === 7) peak = pt;
+          }
+        }
+        ctx.stroke();
+        if (peak) {
+          pendingLabels.push({
+            priority: 0,
+            text: 'ĐỈNH CHỮ U NGƯỢC (500–1000M): +3.91% ***',
+            x: peak.x,
+            y: peak.y - 16,
+            bg: '#10b981',
+            fg: '#022c22',
+            border: '#ffffff',
+            font: 'bold 12px sans-serif'
+          });
+        }
+        ctx.restore();
+      }
+
+      // 11. LANDMARK WATER LABELS
+      const htCenter = gpsToWorld(21.0635, 105.8210);
+      const htLbl = project(htCenter.x, 0.2, htCenter.z);
+      if (htLbl) {
+        pendingLabels.push({
+          priority: 2, text: 'HỒ TÂY', x: htLbl.x, y: htLbl.y,
+          bg: null, fg: isOSM ? '#0369a1' : '#38bdf8', border: null, font: 'bold 12px sans-serif'
+        });
+      }
+      const shCenter = gpsToWorld(21.062, 105.847);
+      const shLbl = project(shCenter.x, 0.2, shCenter.z);
+      if (shLbl) {
+        pendingLabels.push({
+          priority: 2, text: 'SÔNG HỒNG', x: shLbl.x, y: shLbl.y,
+          bg: null, fg: isOSM ? '#0369a1' : '#38bdf8', border: null, font: 'bold 12px sans-serif'
+        });
+      }
+
+      // 12. RENDER COLLISION-FREE LABELS
+      pendingLabels.sort((a, b) => a.priority - b.priority);
+      pendingLabels.forEach(lbl => {
+        tryDrawLabel(lbl.text, lbl.x, lbl.y, lbl.bg, lbl.fg, lbl.border, lbl.font);
+      });
+
+      requestAnimationFrame(render);
+    }
+
+    // =========================================================================
+    // 8. UNIFIED DESKTOP & MOBILE GESTURES
+    // =========================================================================
+    let isDown = false, dragMode = 'orbit', sx = 0, sy = 0, lx = 0, ly = 0, pinchDist = 0;
+
+    function onTap(cx, cy) {
+      let hit = null, minD = Infinity;
+      for (const h of hitBoxes) {
+        const d = Math.hypot(cx - h.x, cy - h.y);
+        if (d <= h.r && h.depth < minD) {
+          minD = h.depth;
+          hit = h;
+        }
+      }
+      if (hit) {
+        if (hit.type === 'project') {
+          focusProject(hit.data.id);
+        } else if (hit.type === 'station') {
+          state.selectedStation = hit.data;
+          state.cam.goalTx = hit.data.x;
+          state.cam.goalTz = hit.data.z;
+          state.cam.goalDist = 26;
+          openSheet('station');
+        }
+      } else {
+        closeSheet();
+      }
+    }
+
+    canvas.addEventListener('mousedown', e => {
+      isDown = true;
+      dragMode = (e.button === 2 || e.shiftKey) ? 'pan' : 'orbit';
+      sx = lx = e.clientX;
+      sy = ly = e.clientY;
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (!isDown) return;
+      const dx = e.clientX - lx, dy = e.clientY - ly;
+      lx = e.clientX; ly = e.clientY;
+      if (dragMode === 'orbit') {
+        state.cam.goalYaw -= dx * 0.0065;
+        state.cam.goalPitch += dy * 0.0055;
+      } else {
+        const pf = state.cam.dist * 0.0018;
+        state.cam.goalTx -= (dx * Math.cos(state.cam.yaw) - dy * Math.sin(state.cam.yaw)) * pf;
+        state.cam.goalTz -= (dx * Math.sin(state.cam.yaw) + dy * Math.cos(state.cam.yaw)) * pf;
+      }
+    });
+
+    window.addEventListener('mouseup', e => {
+      if (!isDown) return;
+      isDown = false;
+      if (Math.hypot(e.clientX - sx, e.clientY - sy) < 6) onTap(e.clientX, e.clientY);
+    });
+
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      state.cam.goalDist += e.deltaY * 0.06;
+    }, { passive: false });
+
+    canvas.addEventListener('touchstart', e => {
+      if (e.touches.length === 1) {
+        isDown = true;
+        sx = lx = e.touches[0].clientX;
+        sy = ly = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        isDown = false;
+        pinchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchmove', e => {
+      if (e.touches.length === 1 && isDown) {
+        const cx = e.touches[0].clientX, cy = e.touches[0].clientY;
+        state.cam.goalYaw -= (cx - lx) * 0.007;
+        state.cam.goalPitch += (cy - ly) * 0.006;
+        lx = cx; ly = cy;
+      } else if (e.touches.length === 2 && pinchDist > 0) {
+        const nd = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        state.cam.goalDist -= (nd - pinchDist) * 0.22;
+        pinchDist = nd;
+      }
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', e => {
+      if (isDown && e.changedTouches.length === 1) {
+        const tx = e.changedTouches[0].clientX, ty = e.changedTouches[0].clientY;
+        if (Math.hypot(tx - sx, ty - sy) < 10) onTap(tx, ty);
+      }
+      isDown = false;
+      pinchDist = 0;
+    }, { passive: true });
+
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
