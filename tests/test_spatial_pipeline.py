@@ -111,6 +111,42 @@ class TestThreeTierSpatialPipeline(unittest.TestCase):
             b_sweet, _, _, _ = extract_coef_row(self.results[model_key], "band_500_1000")
             self.assertLess(b_near, b_sweet * 0.45)
 
+    def test_06_autonomous_3d_presentation_tts_and_storyboard_integrity(self) -> None:
+        """
+        Kiểm tra tính toàn vẹn của Chế độ Trình bày Khoa học Tự động 3D (Autonomous 3D Presentation):
+        - File manifest `assets/audio/narration_manifest.json` đủ 13 phân cảnh (8 chặng).
+        - Toàn bộ 13 file âm thanh TTS tiếng Việt (`scene_01.mp3` .. `scene_13.mp3`) tồn tại và hợp lệ.
+        - `index.html` tích hợp đầy đủ `TOUR_SCENES`, `startAutoPresentation`, `updateTourDirectorFrame`.
+        """
+        manifest_path = PROJECT_ROOT / "assets" / "audio" / "narration_manifest.json"
+        self.assertTrue(manifest_path.exists(), "Thiếu file narration_manifest.json!")
+        scenes = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual(len(scenes), 13)
+        self.assertEqual(len({sc["stage"] for sc in scenes}), 8)
+        total_dur = sum(sc["durationSec"] for sc in scenes)
+        self.assertGreater(total_dur, 300.0)
+
+        index_html = (PROJECT_ROOT / "index.html").read_text(encoding="utf-8")
+        for fn_name in (
+            "TOUR_SCENES",
+            "startAutoPresentation",
+            "updateTourDirectorFrame",
+            "playSceneAudio",
+            "STATION_STOP_ORBIT",
+            "TRAIN_TRANSIT",
+        ):
+            self.assertIn(fn_name, index_html, f"index.html thiếu thành phần {fn_name}!")
+
+        for sc in scenes:
+            audio_rel = sc["audioUrl"]
+            audio_path = PROJECT_ROOT / audio_rel
+            self.assertTrue(audio_path.exists(), f"Thiếu file âm thanh TTS: {audio_rel}")
+            self.assertGreater(audio_path.stat().st_size, 15_000, f"File MP3 quá nhỏ: {audio_rel}")
+            self.assertGreater(sc["durationSec"], 15.0, f"Thời lượng phân cảnh quá ngắn: {audio_rel}")
+            self.assertIn(audio_rel, index_html, f"index.html chưa tham chiếu tới {audio_rel}")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+

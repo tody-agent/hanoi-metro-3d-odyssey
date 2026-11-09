@@ -537,6 +537,268 @@
       accent-color: var(--emerald);
       cursor: pointer;
     }
+
+    /* ===================================================================== */
+    /* AUTONOMOUS SCIENTIFIC 3D PRESENTATION & TELEPROMPTER HUD              */
+    /* ===================================================================== */
+    .present-pill {
+      border: 1px solid rgba(52, 211, 153, 0.75) !important;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.28), rgba(245, 158, 11, 0.22)) !important;
+      color: #ecfdf5 !important;
+      font-weight: 700 !important;
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.35), 0 8px 20px rgba(0, 0, 0, 0.45) !important;
+    }
+    .present-pill:hover {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.42), rgba(245, 158, 11, 0.32)) !important;
+      transform: translateY(-1px);
+    }
+    .present-pill.active-mode {
+      background: linear-gradient(135deg, #10b981, #059669) !important;
+      color: #022c22 !important;
+      border-color: #ffffff !important;
+      box-shadow: 0 0 24px rgba(16, 185, 129, 0.65) !important;
+    }
+
+    .tour-dock {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      z-index: 32;
+      width: min(560px, calc(100vw - 532px));
+      min-width: 320px;
+      background: rgba(6, 13, 26, 0.96);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid rgba(52, 211, 153, 0.45);
+      border-radius: 20px;
+      padding: 12px 15px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.80), 0 0 28px rgba(16, 185, 129, 0.18);
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: auto;
+    }
+    .tour-dock.sheet-closed-wide {
+      width: min(650px, calc(100vw - 28px));
+    }
+    .tour-dock.hidden-dock {
+      display: none !important;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @media (max-width: 1024px) {
+      .tour-dock {
+        width: min(460px, calc(100vw - 524px));
+      }
+    }
+    @media (max-width: 820px) {
+      .tour-dock {
+        top: 58px;
+        bottom: auto;
+        left: 8px;
+        right: 8px;
+        width: auto !important;
+        min-width: 0;
+        padding: 10px 12px;
+      }
+      body.tour-running .info-sheet {
+        max-height: 46vh;
+      }
+    }
+
+    .tour-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .tour-phase-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.20);
+      border: 1px solid rgba(52, 211, 153, 0.45);
+      color: #6ee7b7;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tour-phase-badge.stop-orbit {
+      background: rgba(245, 158, 11, 0.20);
+      border-color: rgba(251, 191, 36, 0.55);
+      color: #fde68a;
+    }
+    .tour-phase-badge.sim-orbit {
+      background: rgba(59, 130, 246, 0.22);
+      border-color: rgba(96, 165, 250, 0.55);
+      color: #93c5fd;
+    }
+
+    .voice-bars {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 11px;
+    }
+    .voice-bars span {
+      width: 2.5px;
+      background: currentColor;
+      border-radius: 2px;
+      animation: voiceBounce 0.7s infinite ease-in-out alternate;
+    }
+    .voice-bars span:nth-child(1) { height: 4px; animation-delay: 0s; }
+    .voice-bars span:nth-child(2) { height: 10px; animation-delay: 0.18s; }
+    .voice-bars span:nth-child(3) { height: 6px; animation-delay: 0.34s; }
+    .voice-bars span:nth-child(4) { height: 11px; animation-delay: 0.12s; }
+    .voice-bars.paused span {
+      animation: none !important;
+      height: 3px !important;
+    }
+    @keyframes voiceBounce {
+      0% { height: 3px; }
+      100% { height: 11px; }
+    }
+
+    .stage-Jump-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 7px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+    .stage-dot {
+      border: 1px solid rgba(148, 163, 184, 0.26);
+      background: rgba(30, 41, 59, 0.75);
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 7px;
+      border-radius: 7px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      flex: 1;
+      text-align: center;
+    }
+    .stage-dot:hover {
+      color: #ffffff;
+      border-color: #6ee7b7;
+    }
+    .stage-dot.active {
+      background: #10b981;
+      color: #022c22;
+      border-color: #ffffff;
+      font-weight: 800;
+    }
+    .stage-dot.done {
+      background: rgba(16, 185, 129, 0.18);
+      color: #6ee7b7;
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    .tour-stage-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tour-stage-sub {
+      font-size: 11.5px;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 1px;
+      margin-bottom: 7px;
+    }
+
+    .tour-sub-box {
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-left: 3.5px solid #10b981;
+      border-radius: 12px;
+      padding: 8px 11px;
+      font-size: 12.8px;
+      line-height: 1.50;
+      color: #f1f5f9;
+      min-height: 58px;
+      max-height: 92px;
+      overflow-y: auto;
+      user-select: text;
+    }
+    .tour-sub-active {
+      color: #6ee7b7;
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.14);
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+    .tour-sub-muted {
+      color: #94a3b8;
+    }
+
+    .tour-prog-wrap {
+      width: 100%;
+      height: 5px;
+      background: rgba(30, 41, 59, 0.95);
+      border-radius: 9999px;
+      overflow: hidden;
+      margin: 8px 0 8px;
+    }
+    .tour-prog-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #10b981, #34d399, #fbbf24);
+      border-radius: 9999px;
+      transition: width 0.12s linear;
+    }
+
+    .tour-ctrl-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tour-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .t-btn {
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      background: rgba(30, 41, 59, 0.9);
+      color: #e2e8f0;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 5px 10px;
+      border-radius: 9px;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .t-btn:hover {
+      border-color: #34d399;
+      color: #ffffff;
+    }
+    .t-btn.primary {
+      background: #10b981;
+      color: #022c22;
+      border-color: #34d399;
+    }
+    .t-btn.primary:hover {
+      background: #34d399;
+    }
   </style>
 </head>
 <body>
@@ -562,9 +824,13 @@
     </nav>
 
     <div class="action-group">
+      <button onclick="toggleAutoPresentation()" id="btn-present" class="icon-pill present-pill" title="Trình bày khoa học tự động 8 chặng (Có giọng đọc TTS, đoàn tàu dừng trạm & xoay 3D 360°)">
+        <span id="present-icon">🎙️</span>
+        <span id="present-label">Trình Bày Tự Động</span>
+      </button>
       <button onclick="toggleMapTheme()" id="btn-theme" class="icon-pill" title="Đổi nền bản đồ OpenStreetMap / Google Earth">
         <span id="theme-icon">🗺️</span>
-        <span id="theme-label">Nền OSM</span>
+        <span class="hide-sm" id="theme-label">Nền OSM</span>
       </button>
       <button onclick="toggleTrainCam()" id="btn-train" class="icon-pill" title="Góc nhìn đi theo đoàn tàu Metro">
         <span>🚝</span>
@@ -576,15 +842,18 @@
     </div>
   </header>
 
-  <!-- BOTTOM INTERACTIVE DOCK (HIDES AUTOMATICALLY WHEN DATA SHEET OPENS) -->
+  <!-- BOTTOM INTERACTIVE DOCK (HIDES AUTOMATICALLY WHEN DATA SHEET OR TOUR DOCK OPENS) -->
   <div id="bottom-bar" class="hud-bottom">
     <div class="prompt-card">
       <div class="prompt-top-row">
         <div class="prompt-info">
           <div id="bar-title" class="prompt-tag">DỮ LIỆU KHÔNG GIAN 3D • N = 16.471 CĂN HỘ (ĐỊNH DANH KHÔNG GIAN 3 TẦNG)</div>
-          <div id="bar-sub" class="prompt-sub">Chọn tòa nhà/nhà ga 3D để xem 3 tầng không gian (Vành đai Đô thị • Phường mới 2 cấp • Tiểu thị trường lịch sử)</div>
+          <div id="bar-sub" class="prompt-sub">Chọn tòa nhà/nhà ga 3D hoặc bấm 🎙️ Trình Bày Tự Động để nghe thuyết minh &amp; mô phỏng đoàn tàu 8 chặng</div>
         </div>
-        <button onclick="openSheet('summary')" id="bar-cta" class="cta-btn">Bảng Số Liệu ↑</button>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button onclick="startAutoPresentation(0)" class="cta-btn" style="background:linear-gradient(135deg,#10b981,#f59e0b);color:#022c22;" title="Khởi chạy bài trình bày khoa học tự động 8 chặng có giọng đọc AI">🎙️ Thuyết Trình 3D</button>
+          <button onclick="openSheet('summary')" id="bar-cta" class="cta-btn">Bảng Số Liệu ↑</button>
+        </div>
       </div>
 
       <!-- STEP 2: INTERACTIVE 3D DISTANCE SIMULATOR -->
@@ -610,6 +879,54 @@
       </div>
     </div>
   </div>
+
+  <!-- AUTONOMOUS SCIENTIFIC PRESENTATION TELEPROMPTER & DIRECTOR DOCK -->
+  <aside id="tour-dock" class="tour-dock hidden-dock" aria-live="polite">
+    <div class="tour-header-row">
+      <div id="tour-phase-badge" class="tour-phase-badge">
+        <span class="voice-bars" id="tour-voice-bars"><span></span><span></span><span></span><span></span></span>
+        <span id="tour-phase-text">🚝 ĐOÀN TÀU ĐANG DI CHUYỂN &amp; THUYẾT MINH</span>
+      </div>
+      <div style="font-size:11px;color:#94a3b8;font-weight:700;white-space:nowrap;" id="tour-counter">Cảnh 1/13</div>
+    </div>
+
+    <!-- 8-Stage Quick Jump Bar -->
+    <div class="stage-Jump-row" id="tour-stage-dots" role="tablist" aria-label="Chuyển nhanh 8 chặng trình bày">
+      <button onclick="jumpToTourStage(1)" class="stage-dot active" title="Chặng 1: Toàn cảnh & Kiến trúc 3 tầng">Chặng 1</button>
+      <button onclick="jumpToTourStage(2)" class="stage-dot" title="Chặng 2: Tuyến 2A & Dừng tại Ga Thượng Đình">Chặng 2</button>
+      <button onclick="jumpToTourStage(3)" class="stage-dot" title="Chặng 3: Tuyến 2A & Dừng tại Ga Hà Đông">Chặng 3</button>
+      <button onclick="jumpToTourStage(4)" class="stage-dot" title="Chặng 4: Tuyến 3 & Dừng tại Ga Cầu Diễn">Chặng 4</button>
+      <button onclick="jumpToTourStage(5)" class="stage-dot" title="Chặng 5: Tuyến 3 & Dừng tại Ga ĐH Quốc Gia">Chặng 5</button>
+      <button onclick="jumpToTourStage(6)" class="stage-dot" title="Chặng 6: Mô phỏng Cự ly 3D Động">Chặng 6</button>
+      <button onclick="jumpToTourStage(7)" class="stage-dot" title="Chặng 7: Kiểm định Hồi quy Đa tầng M1-M6 & MAUP">Chặng 7</button>
+      <button onclick="jumpToTourStage(8)" class="stage-dot" title="Chặng 8: Định giá Hedonic & Khuyến nghị Chính sách">Chặng 8</button>
+    </div>
+
+    <div id="tour-stage-title" class="tour-stage-title">Chặng 1/8: Toàn Cảnh Không Gian 3D &amp; Kiến Trúc 3 Tầng</div>
+    <div id="tour-stage-sub" class="tour-stage-sub">Tổng quan N = 16.471 căn hộ • 20 Ga Metro • 3 Tầng Không Gian</div>
+
+    <!-- Live Academic Teleprompter / Subtitle -->
+    <div id="tour-subtitle" class="tour-sub-box"></div>
+
+    <!-- Progress Bar -->
+    <div class="tour-prog-wrap">
+      <div id="tour-prog-fill" class="tour-prog-fill"></div>
+    </div>
+
+    <!-- Media Controls -->
+    <div class="tour-ctrl-row">
+      <div class="tour-btn-group">
+        <button onclick="prevTourScene()" class="t-btn" title="Phân cảnh trước">⏮ Trước</button>
+        <button onclick="pauseResumeTour()" id="btn-tour-pause" class="t-btn primary" title="Tạm dừng / Tiếp tục">⏸ Tạm dừng</button>
+        <button onclick="nextTourScene()" class="t-btn" title="Phân cảnh tiếp theo">⏭ Tiếp</button>
+      </div>
+      <div class="tour-btn-group">
+        <button onclick="toggleTourMute()" id="btn-tour-mute" class="t-btn" title="Bật/Tắt giọng đọc Text-to-Speech">🔊 Giọng AI</button>
+        <button onclick="cycleTourSpeed()" id="btn-tour-speed" class="t-btn" title="Tốc độ trình bày">1.0x</button>
+        <button onclick="stopAutoPresentation()" class="t-btn" style="border-color:rgba(244,63,94,0.45);color:#fda4af;" title="Dừng trình bày tự động">✕ Thoát</button>
+      </div>
+    </div>
+  </aside>
 
   <!-- ON-DEMAND DATA SCIENCE SHEET (HIDDEN BY DEFAULT) -->
   <section id="info-sheet" class="info-sheet closed" aria-live="polite">
@@ -1050,7 +1367,20 @@
         { line: '2A', prog: 0.76, dir: -1, speed: 0.0014, color: '#10b981' },
         { line: '3', prog: 0.25, dir: 1, speed: 0.0016, color: '#3b82f6' },
         { line: '3', prog: 0.66, dir: -1, speed: 0.0016, color: '#3b82f6' }
-      ]
+      ],
+      tour: {
+        active: false,
+        paused: false,
+        muted: false,
+        speed: 1.0,
+        sceneIdx: 0,
+        sceneElapsed: 0,
+        sceneProgress: 0,
+        switchedMidScene: false,
+        audioEl: null,
+        usingWebSpeech: false,
+        lastFrameTs: 0
+      }
     };
 
     function updateExperimentDist(val) {
@@ -1096,7 +1426,10 @@
       openSheet('summary');
     }
 
-    function setStep(n) {
+    function setStep(n, fromTour = false) {
+      if (!fromTour && state.tour && state.tour.active) {
+        stopAutoPresentation(false);
+      }
       state.step = n;
       state.followTrain = false;
       document.getElementById('btn-train').classList.remove('active-mode');
@@ -1117,7 +1450,7 @@
       if (n === 1) {
         closeSheet();
         bTitle.textContent = 'DỮ LIỆU KHÔNG GIAN 3D • N = 16.471 CĂN HỘ (ĐỊNH DANH KHÔNG GIAN 3 TẦNG)';
-        bSub.textContent = 'Chọn tòa nhà/nhà ga 3D để xem 3 tầng không gian (Vành đai Đô thị • Phường mới 2 cấp • Tiểu thị trường lịch sử)';
+        bSub.textContent = 'Chọn tòa nhà/nhà ga 3D hoặc bấm 🎙️ Trình Bày Tự Động để nghe thuyết minh & mô phỏng đoàn tàu 8 chặng';
         bCta.textContent = 'Bảng Số Liệu ↑';
         state.cam.goalTx = -1; state.cam.goalTy = 1.5; state.cam.goalTz = 3;
         state.cam.goalYaw = -0.20; state.cam.goalPitch = 0.66; state.cam.goalDist = 72;
@@ -1160,6 +1493,9 @@
     }
 
     function toggleTrainCam() {
+      if (state.tour && state.tour.active) {
+        stopAutoPresentation(false);
+      }
       state.followTrain = !state.followTrain;
       const btn = document.getElementById('btn-train');
       const lbl = document.getElementById('train-label');
@@ -1175,6 +1511,9 @@
     }
 
     function resetCamera() {
+      if (state.tour && state.tour.active) {
+        stopAutoPresentation(false);
+      }
       state.followTrain = false;
       document.getElementById('btn-train').classList.remove('active-mode');
       document.getElementById('train-label').textContent = 'Theo Tàu';
@@ -1188,7 +1527,10 @@
 
     function closeSheet() {
       document.getElementById('info-sheet').classList.add('closed');
-      document.getElementById('bottom-bar').classList.remove('hidden-bar');
+      if (!state.tour || !state.tour.active) {
+        document.getElementById('bottom-bar').classList.remove('hidden-bar');
+      }
+      document.getElementById('tour-dock')?.classList.add('sheet-closed-wide');
     }
 
     function openSheet(mode) {
@@ -1198,6 +1540,7 @@
       sheet.classList.remove('closed');
       // Always hide bottom-bar while sheet is open so no text is ever covered or clipped!
       document.getElementById('bottom-bar').classList.add('hidden-bar');
+      document.getElementById('tour-dock')?.classList.remove('sheet-closed-wide');
 
       if (mode === 'project' && state.selectedProject) {
         const p = state.selectedProject;
@@ -1685,6 +2028,818 @@
     }
 
     // =========================================================================
+    // 5B. AUTONOMOUS SCIENTIFIC 3D PRESENTATION DIRECTOR & HYBRID TTS ENGINE
+    // =========================================================================
+    const TOUR_SCENES = [
+      {
+        id: 'scene_01',
+        stage: 1,
+        stageTitle: 'Chặng 1/8: Toàn Cảnh Không Gian 3D & Kiến Trúc 3 Tầng (N = 16.471)',
+        subTitle: 'Tổng quan 16.471 căn hộ • 20 Ga Metro (Tuyến 2A & 3) • Ánh xạ Không gian 3 Tầng',
+        phase: 'ORBIT_OVERVIEW',
+        step: 1,
+        line: '2A',
+        trainStartProg: 0.00,
+        trainEndProg: 0.16,
+        audioUrl: 'assets/audio/scene_01.mp3',
+        durationSec: 42.24,
+        text: 'Chào mừng Hội đồng và quý vị đến với hệ thống trình bày khoa học tự động ba chiều: Định lượng mối liên hệ giữa khả năng tiếp cận giao thông công cộng và giá chào bán căn hộ tại Hà Nội bằng mô hình Hedonic Pricing và hệ thống thông tin địa lý G I S. Nghiên cứu phân tích mười sáu nghìn bốn trăm bảy mươi mốt tin đăng căn hộ dọc hành lang Tuyến Metro hai A Cát Linh Hà Đông và Tuyến số ba Nhổn Ga Hà Nội. Thông qua kỹ thuật ánh xạ tọa độ vật lý bất biến, mô hình tích hợp đồng thời ba tầng không gian: bốn Vành đai Đô thị, bảy Tiểu thị trường lịch sử, và hai mươi mốt Phường mới trực thuộc Thành phố Hà Nội theo mô hình chính quyền địa phương hai cấp.',
+        clauses: [
+          'Chào mừng Hội đồng và quý vị đến với hệ thống trình bày khoa học tự động 3D: Định lượng mối liên hệ giữa khả năng tiếp cận giao thông công cộng và giá chào bán căn hộ tại Hà Nội bằng mô hình Hedonic Pricing và GIS.',
+          'Nghiên cứu phân tích N = 16.471 tin đăng căn hộ dọc hành lang Tuyến Metro 2A (Cát Linh – Hà Đông) và Tuyến số 3 (Nhổn – Ga Hà Nội).',
+          'Thông qua kỹ thuật ánh xạ tọa độ vật lý bất biến (Dual Point-in-Polygon), mô hình tích hợp đồng thời 3 tầng không gian: 4 Vành đai Đô thị (UZ1–UZ4), 7 Tiểu thị trường lịch sử, và 21 Phường mới trực thuộc TP. Hà Nội theo mô hình chính quyền địa phương 2 cấp.'
+        ]
+      },
+      {
+        id: 'scene_02',
+        stage: 2,
+        stageTitle: 'Chặng 2/8: Hành Trình Đoàn Tàu Tuyến 2A (Cát Linh → Thượng Đình)',
+        subTitle: 'Mô phỏng đoàn tàu di chuyển trên cầu cạn • Kiểm chứng giả thuyết tuyến tính truyền thống',
+        phase: 'TRAIN_TRANSIT',
+        step: 1,
+        line: '2A',
+        trainStartProg: 0.16,
+        trainEndProg: 0.4815,
+        audioUrl: 'assets/audio/scene_02.mp3',
+        durationSec: 24.72,
+        text: 'Bây giờ, chúng ta cùng theo chân đoàn tàu điện Tuyến hai A di chuyển trên cầu cạn từ ga Cát Linh, lướt qua La Thành, Thái Hà và đường Láng để tiến về nút giao Ngã Tư Sở. Dọc hành lang đông đúc này, câu hỏi khoa học cốt lõi đặt ra là: Liệu căn hộ càng nằm sát chân ga tàu điện trên cao thì giá trị bất động sản có càng tăng mạnh như giả định tuyến tính truyền thống hay không?',
+        clauses: [
+          'Bây giờ, chúng ta cùng theo chân đoàn tàu điện Tuyến 2A di chuyển trên cầu cạn từ Ga Cát Linh, lướt qua La Thành, Thái Hà và Đường Láng để tiến về nút giao Ngã Tư Sở.',
+          'Dọc hành lang đông đúc này, câu hỏi khoa học cốt lõi đặt ra là: Liệu căn hộ càng nằm sát chân ga tàu điện trên cao thì giá trị bất động sản có càng tăng mạnh như giả định tuyến tính truyền thống hay không?'
+        ]
+      },
+      {
+        id: 'scene_03',
+        stage: 2,
+        stageTitle: 'Chặng 2/8: Dừng Tại Ga Thượng Đình — Xoay 3D 360° Phân Tích Cặp Đối Chứng',
+        subTitle: 'King Palace (410m, <500m: 82.5 tr/m²) vs. Royal City (750m, 500–1000m: 88.7 tr/m², +3.91%***)',
+        phase: 'STATION_STOP_ORBIT',
+        step: 1,
+        line: '2A',
+        stationId: '2A-05',
+        firstProjectId: 'P4',
+        secondProjectId: 'P1',
+        switchAtProg: 0.46,
+        orbitDist: 28,
+        trainStartProg: 0.4815,
+        trainEndProg: 0.4815,
+        audioUrl: 'assets/audio/scene_03.mp3',
+        durationSec: 55.27,
+        text: 'Đoàn tàu vừa dừng lại tại Ga Thượng Đình thuộc Phường Thanh Xuân mới. Khi góc máy ba chiều tự động xoay quanh nhà ga, chúng ta quan sát thấy một cặp đối chứng thực nghiệm điển hình. Tòa nhà King Palace nằm ở cự ly đi bộ bốn trăm mười mét, tức trong vòng tròn đỏ dưới năm trăm mét sát cầu cạn, chỉ đạt giá trung bình tám mươi hai phẩy năm triệu đồng một mét vuông do chịu ngoại ứng tiếng ồn đoàn tàu, rung chấn và ùn tắc giao thông dưới gầm ga. Ngược lại, tổ hợp Royal City với bốn trăm mười hai căn hộ, có khoảng cách chim bay năm trăm sáu mươi tám mét nhưng cự ly đi bộ thực tế qua cầu bộ hành là bảy trăm năm mươi mét, nằm trong vành đai xanh ngọc từ năm trăm đến một nghìn mét, đạt tới tám mươi tám phẩy bảy triệu đồng một mét vuông, hưởng trọn thặng dư vốn hóa cộng ba phẩy sáu mươi mốt đến ba phẩy chín mươi mốt phần trăm.',
+        clauses: [
+          '🛑 Đoàn tàu vừa dừng lại tại Ga Thượng Đình thuộc Phường Thanh Xuân mới (HN_W10). Khi góc máy 3D tự động xoay 360° quanh nhà ga, chúng ta quan sát thấy một cặp đối chứng thực nghiệm điển hình.',
+          'Tòa nhà King Palace (n = 118) nằm ở cự ly đi bộ 410m (trong vòng tròn đỏ <500m sát cầu cạn) chỉ đạt giá TB 82,5 tr/m² do chịu ngoại ứng tiếng ồn đoàn tàu, rung chấn và ùn tắc dưới gầm ga.',
+          'Ngược lại, tổ hợp Royal City (n = 412) có đường chim bay 568m nhưng cự ly đi bộ mạng lưới GIS qua cầu bộ hành là 750m (γ = 1,32), nằm trong vành đai xanh ngọc 500–1.000m, đạt tới 88,7 tr/m² và hưởng trọn thặng dư vốn hóa +3,61% đến +3,91%***.'
+        ]
+      },
+      {
+        id: 'scene_04',
+        stage: 3,
+        stageTitle: 'Chặng 3/8: Hành Trình Đoàn Tàu Tuyến 2A (Thượng Đình → Hà Đông)',
+        subTitle: 'Đoàn tàu vượt Vành đai 3 tiến vào Phân vùng 4 Tây Nam (UZ4 • N = 3.361 căn hộ)',
+        phase: 'TRAIN_TRANSIT',
+        step: 1,
+        line: '2A',
+        trainStartProg: 0.4815,
+        trainEndProg: 0.7778,
+        audioUrl: 'assets/audio/scene_04.mp3',
+        durationSec: 24.98,
+        text: 'Rời Ga Thượng Đình, đoàn tàu Tuyến hai A tiếp tục vượt nút giao Vành đai ba, đi qua Phùng Khoang, Văn Quán để tiến vào phân vùng bốn: Hành lang đô thị phía Tây Nam thuộc các Phường Hà Đông, Dương Nội và Kiến Hưng mới. Đây là khu vực có nguồn cung căn hộ lớn với ba nghìn ba trăm sáu mươi mốt quan sát và mặt bằng giá trung bình sáu mươi phẩy không chín triệu đồng một mét vuông.',
+        clauses: [
+          'Rời Ga Thượng Đình, đoàn tàu Tuyến 2A tiếp tục vượt nút giao Vành đai 3, đi qua Ga Phùng Khoang, Văn Quán để tiến vào Phân vùng 4: Hành lang đô thị phía Tây Nam (P. Hà Đông, Dương Nội, Kiến Hưng mới).',
+          'Đây là khu vực có nguồn cung căn hộ lớn với N = 3.361 quan sát (20,41% mẫu) và mặt bằng giá trung bình 60,09 tr/m².'
+        ]
+      },
+      {
+        id: 'scene_05',
+        stage: 3,
+        stageTitle: 'Chặng 3/8: Dừng Tại Ga Hà Đông — Xoay 3D 360° Kiểm Chứng Suy Giảm Cự Ly',
+        subTitle: 'Seasons Avenue (740m: 66.2 tr/m²) & The Pride (890m) vs. KĐT Xa La (2.100m: 0% Ref)',
+        phase: 'STATION_STOP_ORBIT',
+        step: 1,
+        line: '2A',
+        stationId: '2A-09',
+        firstProjectId: 'P9',
+        secondProjectId: 'P12',
+        switchAtProg: 0.50,
+        orbitDist: 34,
+        trainStartProg: 0.7778,
+        trainEndProg: 0.7778,
+        audioUrl: 'assets/audio/scene_05.mp3',
+        durationSec: 37.58,
+        text: 'Tại điểm dừng Ga Hà Đông, phép xoay ba chiều cho thấy quy luật suy giảm theo cự ly rất rõ nét. Các dự án nằm trong vành đai đi bộ từ sáu đến mười phút như Seasons Avenue ở cự ly bảy trăm bốn mươi mét và The Pride ở cự ly tám trăm chín mươi mét đều hưởng mức tăng giá có ý nghĩa thống kê. Tuy nhiên, khi ra tới Khu đô thị Xa La ở cự ly đi bộ hai nghìn một trăm mét, vượt quá ngưỡng đi bộ mười lăm phút trong điều kiện khí hậu nhiệt đới, cư dân chuyển hẳn sang sử dụng xe máy cá nhân, khiến hiệu ứng vốn hóa của tàu điện hội tụ hoàn toàn về không phần trăm.',
+        clauses: [
+          '🛑 Tại điểm dừng Ga Hà Đông, phép xoay 3D 360° cho thấy quy luật suy giảm theo cự ly (Distance Decay) rất rõ nét.',
+          'Các dự án nằm trong vành đai đi bộ 6–10 phút như Seasons Avenue (740m, 66,2 tr/m²) và The Pride (890m, 58,4 tr/m²) đều hưởng mức thặng dư vốn hóa dương có ý nghĩa thống kê.',
+          'Tuy nhiên, khi ra tới Khu đô thị Xa La ở cự ly đi bộ 2.100m (>1.500m), vượt quá ngưỡng đi bộ 15 phút trong khí hậu nhiệt đới, cư dân chuyển hẳn sang xe máy cá nhân khiến vốn hóa Metro hội tụ về 0%.'
+        ]
+      },
+      {
+        id: 'scene_06',
+        stage: 4,
+        stageTitle: 'Chặng 4/8: Chuyển Tuyến Sang Metro Số 3 (Ga Nhổn → Ga Cầu Diễn)',
+        subTitle: 'Mô phỏng đoàn tàu Tuyến 3 trên cao dọc Hành lang Phía Tây (UZ3 • N = 5.732 căn hộ)',
+        phase: 'TRAIN_TRANSIT',
+        step: 1,
+        line: '3',
+        trainStartProg: 0.00,
+        trainEndProg: 0.2857,
+        audioUrl: 'assets/audio/scene_06.mp3',
+        durationSec: 22.51,
+        text: 'Chuyển sang hành lang phía Tây, chúng ta theo dõi đoàn tàu Tuyến số ba màu xanh dương khởi hành từ Ga Nhổn, di chuyển qua Minh Khai và Phú Diễn để tiến về Ga Cầu Diễn. Đoạn trên cao của Tuyến số ba gồm tám nhà ga vận hành thương mại đã tạo nên trục giao thông huyết mạch cho năm nghìn bảy trăm ba mươi hai căn hộ thuộc phân vùng đô thị hóa phía Tây.',
+        clauses: [
+          'Chuyển sang hành lang phía Tây, chúng ta theo dõi đoàn tàu Tuyến số 3 (màu xanh dương) khởi hành từ Ga Nhổn, di chuyển qua Minh Khai và Phú Diễn để tiến về Ga Cầu Diễn.',
+          'Đoạn trên cao của Tuyến số 3 gồm 8 nhà ga vận hành thương mại đã tạo nên trục giao thông huyết mạch cho N = 5.732 căn hộ thuộc Phân vùng 3 (UZ3).'
+        ]
+      },
+      {
+        id: 'scene_07',
+        stage: 4,
+        stageTitle: 'Chặng 4/8: Dừng Tại Ga Cầu Diễn — Xoay 3D 360° Phân Tích Goldmark City',
+        subTitle: 'Goldmark City (n = 385, cự ly đi bộ GIS 680m: 84.2 tr/m² • Phường Phú Diễn mới HN_W13)',
+        phase: 'STATION_STOP_ORBIT',
+        step: 1,
+        line: '3',
+        stationId: '3-04',
+        firstProjectId: 'P2',
+        secondProjectId: null,
+        orbitDist: 29,
+        trainStartProg: 0.2857,
+        trainEndProg: 0.2857,
+        audioUrl: 'assets/audio/scene_07.mp3',
+        durationSec: 34.80,
+        text: 'Khi đoàn tàu Tuyến số ba dừng tại Ga Cầu Diễn thuộc Phường Phú Diễn mới, góc xoay ba trăm sáu mươi độ làm nổi bật tổ hợp Goldmark City với ba trăm tám mươi lăm căn hộ trong mẫu nghiên cứu. Với cự ly đi bộ mạng lưới sáu trăm tám mươi mét, tương đương khoảng tám phút đi bộ tới nhà ga, dự án đạt mức giá trung bình tám mươi tư phẩy hai triệu đồng một mét vuông, cao hơn mặt bằng chung khu vực Bắc Từ Liêm và khẳng định hiệu ứng vành đai vàng từ năm trăm đến một nghìn mét xuất hiện nhất quán trên cả hai tuyến đường sắt đô thị.',
+        clauses: [
+          '🛑 Khi đoàn tàu Tuyến 3 dừng tại Ga Cầu Diễn (Phường Phú Diễn mới HN_W13), góc xoay 360° làm nổi bật tổ hợp Goldmark City với n = 385 căn hộ trong mẫu nghiên cứu.',
+          'Với cự ly đi bộ mạng lưới 680m (~8 phút đi bộ tới ga, đường chim bay 515m), dự án đạt 84,2 tr/m² — cao hơn mặt bằng chung Bắc Từ Liêm (81,55 tr/m²) và khẳng định hiệu ứng vành đai vàng 500–1.000m xuất hiện nhất quán trên cả 2 tuyến Metro.'
+        ]
+      },
+      {
+        id: 'scene_08',
+        stage: 5,
+        stageTitle: 'Chặng 5/8: Hành Trình Đoàn Tàu Tuyến 3 (Cầu Diễn → ĐH Quốc Gia)',
+        subTitle: 'Đoàn tàu vượt nút giao Mai Dịch tiến vào lõi thương mại Xuân Thủy – Cầu Giấy (UZ2)',
+        phase: 'TRAIN_TRANSIT',
+        step: 1,
+        line: '3',
+        trainStartProg: 0.2857,
+        trainEndProg: 0.4762,
+        audioUrl: 'assets/audio/scene_08.mp3',
+        durationSec: 15.50,
+        text: 'Từ Ga Cầu Diễn, đoàn tàu Tuyến số ba tiếp tục lướt qua Ga Lê Đức Thọ, vượt cầu cạn Mai Dịch để tiến vào trục Xuân Thủy Cầu Giấy, một trong những tiểu thị trường căn hộ sôi động nhất Hà Nội với gần hai nghìn chín trăm quan sát.',
+        clauses: [
+          'Từ Ga Cầu Diễn, đoàn tàu Tuyến số 3 tiếp tục lướt qua Ga Lê Đức Thọ, vượt cầu cạn Mai Dịch để tiến vào trục Xuân Thủy – Cầu Giấy, tiểu thị trường sôi động với N = 2.895 quan sát.'
+        ]
+      },
+      {
+        id: 'scene_09',
+        stage: 5,
+        stageTitle: 'Chặng 5/8: Dừng Tại Ga ĐH Quốc Gia — Xoay 3D 360° Đối Chứng Chữ U Ngược',
+        subTitle: 'IPH (290m, <500m: β = +0.0041 ns) & Discovery (320m) vs. Mipec Rubik 360 (620m: +3.91%***)',
+        phase: 'STATION_STOP_ORBIT',
+        step: 1,
+        line: '3',
+        stationId: '3-06',
+        firstProjectId: 'P5',
+        secondProjectId: 'P6',
+        switchAtProg: 0.52,
+        orbitDist: 28,
+        trainStartProg: 0.4762,
+        trainEndProg: 0.4762,
+        audioUrl: 'assets/audio/scene_09.mp3',
+        durationSec: 47.76,
+        text: 'Dừng chân tại Ga Đại học Quốc Gia thuộc Phường Cầu Giấy mới, góc máy xoay ba chiều minh họa rõ bằng chứng thực nghiệm thứ hai về hiệu ứng chữ U ngược. Tòa tháp Indochina Plaza ở cự ly đi bộ hai trăm chín mươi mét và Discovery Complex ở cự ly ba trăm hai mươi mét nằm ngay sát mặt cầu cạn Xuân Thủy. Sau khi kiểm soát chất lượng công trình và vị trí nội đô, phần thặng dư thuần túy do đứng sát ga dưới năm trăm mét bị triệt tiêu về mức không phẩy mười tám đến không phẩy bốn mươi mốt phần trăm, không có ý nghĩa thống kê. Ngược lại, tổ hợp Mipec Rubik ba sáu mươi lùi sâu vào khuôn viên ở cự ly đi bộ sáu trăm hai mươi mét lại tách biệt hoàn toàn khỏi tiếng ồn và đạt mức thặng dư vốn hóa tối ưu gần bốn phần trăm.',
+        clauses: [
+          '🛑 Dừng chân tại Ga ĐH Quốc Gia (Phường Cầu Giấy mới HN_W07), góc máy xoay 3D 360° minh họa rõ bằng chứng thực nghiệm thứ hai về Hiệu ứng chữ U ngược (Inverted-U).',
+          'Indochina Plaza - IPH (290m) và Discovery Complex (320m) nằm ngay sát mặt cầu cạn Xuân Thủy: phần thặng dư thuần túy do đứng sát ga <500m bị triệt tiêu về +0,18% đến +0,41% (p > 0,55, không có ý nghĩa thống kê) bởi xung đột giao thông và tiếng ồn.',
+          'Ngược lại, tổ hợp Mipec Rubik 360 (n = 192) lùi sâu vào khuôn viên 122 Xuân Thủy với cự ly đi bộ 620m (~7,5 phút) tách biệt hoàn toàn khỏi tiếng ồn và đạt mức thặng dư vốn hóa tối ưu +3,61% đến +3,91%***.'
+        ]
+      },
+      {
+        id: 'scene_10',
+        stage: 6,
+        stageTitle: 'Chặng 6/8: Mô Phỏng Thực Nghiệm Cự Ly 3D Động (150m → 1.750m)',
+        subTitle: 'Tự động dịch chuyển tòa nhà kiểm thử 3D dọc mạng lưới GIS & Xoay 360° quan sát thặng dư',
+        phase: 'SIMULATION_ORBIT',
+        step: 2,
+        line: '2A',
+        stationId: '2A-05',
+        firstProjectId: 'P1',
+        audioUrl: 'assets/audio/scene_10.mp3',
+        durationSec: 44.18,
+        text: 'Bước sang giai đoạn hai: Mô phỏng tham số cự ly ba chiều. Hãy quan sát tòa nhà kiểm thử tự động dịch chuyển dọc theo mạng lưới đi bộ G I S từ chân nhà ga ra xa, trong khi góc máy xoay xung quanh. Ở cự ly hai trăm năm mươi mét sát cầu cạn, khối thặng dư trên đỉnh tòa nhà bị nén thấp vì ngoại ứng tiếng ồn. Ngay khi tòa nhà tiến vào vành đai vàng từ năm trăm đến một nghìn mét, tương ứng sáu đến mười phút đi bộ, khối giá trị gia tăng vọt lên màu vàng ngọc với mức cực đại cộng ba phẩy chín mươi mốt phần trăm. Khi trượt tiếp ra vùng đệm một nghìn hai trăm năm mươi mét và ngoài một nghìn năm trăm mét, lợi ích đi bộ suy giảm nhanh chóng về không.',
+        clauses: [
+          '🔬 Bước sang Giai đoạn 2: Mô phỏng tham số cự ly 3D động. Hãy quan sát tòa nhà kiểm thử tự động dịch chuyển dọc mạng lưới đi bộ GIS từ chân nhà ga ra xa trong khi góc máy xoay 360° xung quanh.',
+          'Ở cự ly 250m (<500m sát cầu cạn), khối thặng dư trên đỉnh tòa nhà bị nén thấp (+0,41% ns) vì ngoại ứng tiếng ồn. Ngay khi tiến vào vành đai vàng 500–1.000m (6–10 phút đi bộ), khối giá trị gia tăng vọt lên màu vàng ngọc với mức cực đại +3,91%*** (p < 0,001).',
+          'Khi trượt tiếp ra vùng đệm 1.250m (+0,02% ns) và ngoài 1.500m (0,00% Ref), lợi ích đi bộ suy giảm nhanh chóng về không.'
+        ]
+      },
+      {
+        id: 'scene_11',
+        stage: 7,
+        stageTitle: 'Chặng 7/8: Kiểm Định Kinh Tế Lượng Đa Tầng (M1–M6) & Vòm Chữ U Ngược 3D',
+        subTitle: 'Đối chiếu hệ số hồi quy OLS HC3 trên 3 tầng không gian và mẫu định vị tòa nhà (N = 10.521)',
+        phase: 'ECONOMETRIC_ORBIT',
+        step: 3,
+        line: '2A',
+        summaryTab: 'ols',
+        audioUrl: 'assets/audio/scene_11.mp3',
+        durationSec: 53.52,
+        text: 'Ở giai đoạn ba, toàn bộ phát hiện không gian được kiểm định bằng hệ thống sáu mô hình kinh tế lượng Hedonic với sai số chuẩn vững H C ba trên mười sáu nghìn bốn trăm bảy mươi mốt căn hộ. Trên không gian ba chiều bên trái là vòm parabol chữ U ngược cùng bốn cột trụ hệ số hồi quy. Bảng số liệu bên phải chứng minh: Khi đưa kiểm soát cố định không gian vào mô hình, thặng dư tại vành đai năm trăm đến một nghìn mét hội tụ vững chắc ở mức ý nghĩa chín mươi chín phần trăm: đạt cộng ba phẩy sáu mươi mốt phần trăm ở Mô hình ba theo bốn Vành đai Đô thị, cộng ba phẩy chín mươi mốt phần trăm ở Mô hình bốn theo bảy Tiểu thị trường lịch sử, cộng ba phẩy bảy mươi ba phần trăm ở Mô hình năm theo hai mươi mốt Phường mới, và cộng ba phẩy chín mươi phần trăm ở Mô hình sáu chỉ giữ mười nghìn năm trăm hai mươi mốt căn hộ định vị chính xác tòa nhà.',
+        clauses: [
+          '📊 Ở Giai đoạn 3, toàn bộ phát hiện không gian được kiểm định bằng hệ thống 6 mô hình kinh tế lượng Hedonic (OLS HC3) trên N = 16.471 căn hộ. Bên trái là vòm Parabol chữ U ngược 3D cùng 4 cột trụ hệ số hồi quy.',
+          'Bảng 2 bên phải chứng minh: Khi đưa kiểm soát cố định không gian (Spatial FE) vào mô hình, thặng dư tại vành đai 500–1.000m hội tụ vững chắc ở mức ý nghĩa 99% (p < 0,001):',
+          'Đạt +3,61%*** (β = 0,0354) ở Mô hình 3 (4 Vành đai Đô thị + ln_CBD), +3,91%*** (β = 0,0383) ở Mô hình 4 (7 Tiểu thị trường lịch sử), +3,73%*** (β = 0,0366) ở Mô hình 5 (21 Phường mới 2 cấp), và +3,90%*** ở Mô hình 6 (N = 10.521 căn hộ Exact GPS).'
+        ]
+      },
+      {
+        id: 'scene_12',
+        stage: 7,
+        stageTitle: 'Chặng 7/8: Giải Quyết Bài Toán Chính Quyền 2 Cấp, MAUP, VIF & Moran\'s I',
+        subTitle: 'Kiểm soát đa cộng tuyến (Max VIF = 3.238 < 5.0) & Khử tự tương quan không gian (Moran\'s I = 0.0488)',
+        phase: 'ECONOMETRIC_ORBIT',
+        step: 3,
+        line: '2A',
+        summaryTab: 'districts',
+        switchTabAtProg: 0.38,
+        secondSummaryTab: 'method',
+        audioUrl: 'assets/audio/scene_12.mp3',
+        durationSec: 47.71,
+        text: 'Tại sao nghiên cứu phải thiết kế kiến trúc không gian ba tầng khi Việt Nam thực hiện bỏ cấp trung gian quận huyện? Theo lý thuyết bài toán đơn vị không gian khả biến M A U P, diện tích một phường nội đô rất nhỏ, trùng với bán kính đi bộ tới ga tàu; nếu chỉ dùng biến giả cấp phường làm mô hình duy nhất sẽ gây hiện tượng kiểm soát quá mức làm hấp thụ phương sai. Việc kết hợp Mô hình chính theo bốn Vành đai Đô thị với Mô hình hai mươi mốt Phường mới giúp hệ số phóng đại phương sai V I F tối đa chỉ bằng ba phẩy hai mươi tư, nhỏ hơn nhiều ngưỡng năm chấm không, đồng thời khử hoàn toàn tự tương quan không gian khi chỉ số Moran I giảm từ không phẩy tám mươi mốt về không phẩy không bốn tám, không còn ý nghĩa thống kê.',
+        clauses: [
+          'Tại sao nghiên cứu phải thiết kế Kiến trúc Không gian 3 Tầng khi Việt Nam thực hiện bỏ cấp trung gian quận/huyện sang chính quyền địa phương 2 cấp?',
+          'Theo lý thuyết Modifiable Areal Unit Problem (MAUP — Openshaw, 1984), diện tích một phường nội đô rất nhỏ (bán kính 500–1.500m), trùng với bán kính đi bộ tới ga tàu; nếu chỉ dùng biến giả cấp phường duy nhất sẽ gây hiện tượng kiểm soát quá mức (over-controlling).',
+          'Kết hợp Mô hình 3 (4 Vành đai Đô thị) với Mô hình 5 (21 Phường mới) giúp Max VIF = 3,238 < 5,0 và khử hoàn toàn tự tương quan không gian khi Moran\'s I giảm từ 0,8140 (p < 0,001) về 0,0488 (p = 0,2816, ns) và -0,0393 (p = 0,5243, ns).'
+        ]
+      },
+      {
+        id: 'scene_13',
+        stage: 8,
+        stageTitle: 'Chặng 8/8: Định Giá Hedonic Thực Tiễn & Khuyến Nghị Chính Sách TOD Hà Nội',
+        subTitle: 'Lượng hóa thặng dư căn hộ tiêu chuẩn (+286 Triệu VNĐ) & Tổng kết Bảo vệ Khóa luận',
+        phase: 'VALUATION_FINALE',
+        step: 4,
+        line: '2A',
+        audioUrl: 'assets/audio/scene_13.mp3',
+        durationSec: 44.71,
+        text: 'Cuối cùng, tại mô hình lượng hóa giá trị thực tiễn, với một căn hộ tiêu chuẩn chín mươi mét vuông tại Phường Thanh Xuân mới, việc dịch chuyển từ ngoài vùng phục vụ vào vành đai đi bộ tối ưu bảy trăm năm mươi mét mang lại giá trị gia tăng ròng khoảng hai trăm tám mươi sáu triệu đồng. Từ bằng chứng thực nghiệm này, khóa luận kiến nghị Thành phố Hà Nội và Ủy ban nhân dân hai mươi mốt Phường mới áp dụng cơ chế thu hồi giá trị đất tập trung vào vành đai vàng từ năm trăm đến một nghìn mét, đồng thời bắt buộc thiết kế khoảng lùi xanh và tường chắn âm trong bán kính năm trăm mét sát cầu cạn. Bài trình bày khoa học tự động xin kết thúc tại đây. Xin trân trọng cảm ơn Hội đồng và quý vị đã chú ý lắng nghe!',
+        clauses: [
+          '🧮 Cuối cùng, tại Mô hình Lượng hóa Giá trị Hedonic, với một căn hộ tiêu chuẩn 90m² tại Phường Thanh Xuân mới (HN_W10), việc nằm trong vành đai đi bộ tối ưu 750m mang lại giá trị gia tăng ròng khoảng +286,0 Triệu VNĐ.',
+          'Từ bằng chứng thực nghiệm này, khóa luận kiến nghị TP. Hà Nội và UBND 21 Phường mới áp dụng cơ chế thu hồi giá trị đất (Land Value Capture) tập trung vào vành đai vàng 500–1.000m, đồng thời bắt buộc thiết kế khoảng lùi xanh và tường chắn âm trong bán kính <500m sát cầu cạn.',
+          '🎓 Bài trình bày khoa học tự động 8 chặng xin kết thúc tại đây. Xin trân trọng cảm ơn Hội đồng và quý vị đã chú ý lắng nghe!'
+        ]
+      }
+    ];
+
+    let audioCtx = null;
+    function playStationChime(isArrival = true) {
+      if (state.tour.muted) return;
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!audioCtx) audioCtx = new Ctx();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const now = audioCtx.currentTime;
+        const notes = isArrival ? [523.25, 659.25, 783.99] : [440.0, 554.37];
+        notes.forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.14);
+          gain.gain.setValueAtTime(0.001, now + i * 0.14);
+          gain.gain.exponentialRampToValueAtTime(0.09, now + i * 0.14 + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0008, now + i * 0.14 + 0.55);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.14);
+          osc.stop(now + i * 0.14 + 0.58);
+        });
+      } catch (_) {}
+    }
+
+    function stopCurrentAudio() {
+      if (state.tour.audioEl) {
+        try {
+          state.tour.audioEl.onended = null;
+          state.tour.audioEl.onerror = null;
+          state.tour.audioEl.pause();
+          state.tour.audioEl.src = '';
+        } catch (_) {}
+        state.tour.audioEl = null;
+      }
+      if ('speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); } catch (_) {}
+      }
+      state.tour.usingWebSpeech = false;
+    }
+
+    function startWebSpeechFallback(sc) {
+      state.tour.usingWebSpeech = true;
+      if (state.tour.muted || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(sc.text);
+        utter.lang = 'vi-VN';
+        utter.rate = Math.min(1.5, Math.max(0.8, state.tour.speed * 1.05));
+        const voices = window.speechSynthesis.getVoices() || [];
+        const viVoice = voices.find(v => v.lang && v.lang.toLowerCase().includes('vi'));
+        if (viVoice) utter.voice = viVoice;
+        window.speechSynthesis.speak(utter);
+      } catch (_) {}
+    }
+
+    function playSceneAudio(sc) {
+      stopCurrentAudio();
+      if (state.tour.muted || state.tour.paused) return;
+
+      const audio = new Audio(sc.audioUrl);
+      audio.playbackRate = state.tour.speed;
+      state.tour.audioEl = audio;
+
+      audio.onended = () => {
+        if (state.tour.active && !state.tour.paused) {
+          advanceToNextTourScene();
+        }
+      };
+      audio.onerror = () => {
+        state.tour.audioEl = null;
+        startWebSpeechFallback(sc);
+      };
+
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {
+          // If autoplay was blocked prior to first user gesture, use timer/WebSpeech and unlock MP3 on first click
+          state.tour.audioEl = null;
+          startWebSpeechFallback(sc);
+          const unlockHandler = () => {
+            window.removeEventListener('pointerdown', unlockHandler);
+            window.removeEventListener('keydown', unlockHandler);
+            if (state.tour.active && !state.tour.paused && !state.tour.muted && !state.tour.audioEl) {
+              const curSc = TOUR_SCENES[state.tour.sceneIdx];
+              if (curSc) {
+                const resumed = new Audio(curSc.audioUrl);
+                resumed.playbackRate = state.tour.speed;
+                resumed.currentTime = Math.min(curSc.durationSec - 0.5, state.tour.sceneElapsed);
+                resumed.onended = () => { if (state.tour.active && !state.tour.paused) advanceToNextTourScene(); };
+                state.tour.audioEl = resumed;
+                resumed.play().catch(() => {});
+              }
+            }
+          };
+          window.addEventListener('pointerdown', unlockHandler, { once: true });
+          window.addEventListener('keydown', unlockHandler, { once: true });
+        });
+      }
+    }
+
+    function renderTourSubtitles(sc, prog) {
+      const box = document.getElementById('tour-subtitle');
+      if (!box || !sc) return;
+      const clauses = sc.clauses || [sc.text];
+      const totalChars = clauses.reduce((acc, c) => acc + c.length, 0) || 1;
+      let acc = 0;
+      let activeIdx = clauses.length - 1;
+      for (let i = 0; i < clauses.length; i++) {
+        acc += clauses[i].length;
+        if (prog <= (acc / totalChars) + 0.02) {
+          activeIdx = i;
+          break;
+        }
+      }
+      if (box.dataset.sceneId !== sc.id || Number(box.dataset.activeIdx) !== activeIdx) {
+        box.dataset.sceneId = sc.id;
+        box.dataset.activeIdx = String(activeIdx);
+        box.innerHTML = clauses.map((c, idx) =>
+          `<span class="${idx === activeIdx ? 'tour-sub-active' : 'tour-sub-muted'}">${c}</span>`
+        ).join(' ');
+        const activeEl = box.querySelector('.tour-sub-active');
+        if (activeEl) {
+          activeEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+      }
+    }
+
+    function loadTourScene(idx) {
+      const clampedIdx = Math.max(0, Math.min(TOUR_SCENES.length - 1, idx));
+      state.tour.sceneIdx = clampedIdx;
+      state.tour.sceneElapsed = 0;
+      state.tour.sceneProgress = 0;
+      state.tour.switchedMidScene = false;
+      state.tour.lastFrameTs = performance.now();
+
+      const sc = TOUR_SCENES[clampedIdx];
+      if (!sc) return;
+
+      // Update Teleprompter Header & Stage Dots
+      document.getElementById('tour-stage-title').textContent = sc.stageTitle;
+      document.getElementById('tour-stage-sub').textContent = sc.subTitle;
+      document.getElementById('tour-counter').textContent = `Cảnh ${clampedIdx + 1}/${TOUR_SCENES.length} • Chặng ${sc.stage}/8`;
+
+      const dotsWrap = document.getElementById('tour-stage-dots');
+      if (dotsWrap) {
+        Array.from(dotsWrap.children).forEach((btn, i) => {
+          const stNum = i + 1;
+          btn.className = stNum === sc.stage ? 'stage-dot active' : (stNum < sc.stage ? 'stage-dot done' : 'stage-dot');
+        });
+      }
+
+      const badge = document.getElementById('tour-phase-badge');
+      const phaseTxt = document.getElementById('tour-phase-text');
+      badge.className = 'tour-phase-badge';
+      if (sc.phase === 'ORBIT_OVERVIEW') {
+        phaseTxt.textContent = '🌐 TOÀN CẢNH 3D • XOAY MÔ PHỎNG & THUYẾT MINH';
+      } else if (sc.phase === 'TRAIN_TRANSIT') {
+        phaseTxt.textContent = `🚝 TÀU TUYẾN ${sc.line} ĐANG DI CHUYỂN & THUYẾT MINH`;
+      } else if (sc.phase === 'STATION_STOP_ORBIT') {
+        badge.classList.add('stop-orbit');
+        const stObj = STATIONS.find(s => s.id === sc.stationId);
+        phaseTxt.textContent = `🛑 DỪNG TẠI ${(stObj ? stObj.name : 'NHÀ GA').toUpperCase()} • XOAY 3D 360°`;
+        playStationChime(true);
+      } else if (sc.phase === 'SIMULATION_ORBIT') {
+        badge.classList.add('sim-orbit');
+        phaseTxt.textContent = '🔬 MÔ PHỎNG TRƯỢT CỰ LY 3D (150m → 1.750m) & XOAY 360°';
+      } else if (sc.phase === 'ECONOMETRIC_ORBIT') {
+        badge.classList.add('stop-orbit');
+        phaseTxt.textContent = '📊 KIỂM ĐỊNH KINH TẾ LƯỢNG ĐA TẦNG (M1–M6) & XOAY 3D';
+      } else if (sc.phase === 'VALUATION_FINALE') {
+        badge.classList.add('sim-orbit');
+        phaseTxt.textContent = '🧮 ĐỊNH GIÁ HEDONIC THỰC TIỄN & KHUYẾN NGHỊ CHÍNH SÁCH';
+      }
+
+      renderTourSubtitles(sc, 0);
+      document.getElementById('tour-prog-fill').style.width = '0%';
+
+      // Sync Step UI buttons without cancelling tour
+      state.step = sc.step;
+      for (let i = 1; i <= 4; i++) {
+        const btn = document.getElementById(`step-${i}`);
+        if (btn) btn.className = (i === sc.step) ? 'nav-btn active' : 'nav-btn';
+      }
+
+      // Configure scene-specific 3D & Data Sheet state
+      if (sc.phase === 'ORBIT_OVERVIEW') {
+        closeSheet();
+        state.selectedProject = PROJECTS[0];
+        state.trains[0].prog = sc.trainStartProg;
+        state.cam.goalTx = -1; state.cam.goalTy = 1.6; state.cam.goalTz = 3;
+        state.cam.goalPitch = 0.60; state.cam.goalDist = 68;
+      } else if (sc.phase === 'TRAIN_TRANSIT') {
+        closeSheet();
+        const trIdx = sc.line === '3' ? 2 : 0;
+        state.trains[trIdx].prog = sc.trainStartProg;
+        state.trains[trIdx].dir = sc.trainEndProg >= sc.trainStartProg ? 1 : -1;
+      } else if (sc.phase === 'STATION_STOP_ORBIT') {
+        const trIdx = sc.line === '3' ? 2 : 0;
+        state.trains[trIdx].prog = sc.trainEndProg;
+        if (sc.stationId) {
+          state.selectedStation = STATIONS.find(s => s.id === sc.stationId) || null;
+        }
+        if (sc.firstProjectId) {
+          state.selectedProject = PROJECTS.find(p => p.id === sc.firstProjectId) || PROJECTS[0];
+        }
+        openSheet('project');
+      } else if (sc.phase === 'SIMULATION_ORBIT') {
+        closeSheet();
+        state.selectedProject = PROJECTS.find(p => p.id === (sc.firstProjectId || 'P1')) || PROJECTS[0];
+        updateExperimentDist(220);
+      } else if (sc.phase === 'ECONOMETRIC_ORBIT') {
+        state.selectedProject = PROJECTS[0];
+        state.proofView = 'bonus';
+        state.activeSummaryTab = sc.summaryTab || 'ols';
+        openSheet('summary');
+      } else if (sc.phase === 'VALUATION_FINALE') {
+        openSheet('calc');
+        const distSel = document.getElementById('c-dist');
+        const areaInp = document.getElementById('c-area');
+        const walkInp = document.getElementById('c-walk');
+        if (distSel) distSel.value = '81.27';
+        if (areaInp) areaInp.value = '90';
+        if (walkInp) walkInp.value = '1600';
+        runCalc();
+      }
+
+      playSceneAudio(sc);
+    }
+
+    function advanceToNextTourScene() {
+      if (!state.tour.active) return;
+      if (state.tour.sceneIdx + 1 < TOUR_SCENES.length) {
+        loadTourScene(state.tour.sceneIdx + 1);
+      } else {
+        // Completed all 13 scenes across 8 stages — loop back to overview or finish gracefully
+        stopAutoPresentation(true);
+      }
+    }
+
+    function startAutoPresentation(startIdx = 0) {
+      state.followTrain = false;
+      document.getElementById('btn-train')?.classList.remove('active-mode');
+      const trLbl = document.getElementById('train-label');
+      if (trLbl) trLbl.textContent = 'Theo Tàu';
+
+      state.tour.active = true;
+      state.tour.paused = false;
+      document.body.classList.add('tour-running');
+
+      const btnPresent = document.getElementById('btn-present');
+      const lblPresent = document.getElementById('present-label');
+      const icoPresent = document.getElementById('present-icon');
+      if (btnPresent) btnPresent.classList.add('active-mode');
+      if (icoPresent) icoPresent.textContent = '⏹️';
+      if (lblPresent) lblPresent.textContent = 'Đang Trình Bày (8 Chặng)';
+
+      document.getElementById('bottom-bar')?.classList.add('hidden-bar');
+      document.getElementById('tour-dock')?.classList.remove('hidden-dock');
+      document.getElementById('tour-voice-bars')?.classList.remove('paused');
+      const pauseBtn = document.getElementById('btn-tour-pause');
+      if (pauseBtn) pauseBtn.textContent = '⏸ Tạm dừng';
+
+      loadTourScene(startIdx);
+    }
+
+    function stopAutoPresentation(resetToHome = true) {
+      stopCurrentAudio();
+      state.tour.active = false;
+      state.tour.paused = false;
+      document.body.classList.remove('tour-running');
+
+      const btnPresent = document.getElementById('btn-present');
+      const lblPresent = document.getElementById('present-label');
+      const icoPresent = document.getElementById('present-icon');
+      if (btnPresent) btnPresent.classList.remove('active-mode');
+      if (icoPresent) icoPresent.textContent = '🎙️';
+      if (lblPresent) lblPresent.textContent = 'Trình Bày Tự Động';
+
+      document.getElementById('tour-dock')?.classList.add('hidden-dock');
+      if (resetToHome) {
+        setStep(1, true);
+      } else {
+        const sheetClosed = document.getElementById('info-sheet')?.classList.contains('closed');
+        if (sheetClosed) {
+          document.getElementById('bottom-bar')?.classList.remove('hidden-bar');
+        }
+      }
+    }
+
+    function toggleAutoPresentation() {
+      if (state.tour.active) {
+        stopAutoPresentation(true);
+      } else {
+        startAutoPresentation(0);
+      }
+    }
+
+    function pauseResumeTour() {
+      if (!state.tour.active) return;
+      state.tour.paused = !state.tour.paused;
+      const pauseBtn = document.getElementById('btn-tour-pause');
+      const vBars = document.getElementById('tour-voice-bars');
+      if (state.tour.paused) {
+        if (pauseBtn) pauseBtn.textContent = '▶ Tiếp tục';
+        vBars?.classList.add('paused');
+        if (state.tour.audioEl) {
+          try { state.tour.audioEl.pause(); } catch (_) {}
+        }
+        if ('speechSynthesis' in window) {
+          try { window.speechSynthesis.pause(); } catch (_) {}
+        }
+      } else {
+        if (pauseBtn) pauseBtn.textContent = '⏸ Tạm dừng';
+        if (!state.tour.muted) vBars?.classList.remove('paused');
+        state.tour.lastFrameTs = performance.now();
+        if (state.tour.audioEl) {
+          state.tour.audioEl.play().catch(() => {});
+        } else if (!state.tour.muted) {
+          playSceneAudio(TOUR_SCENES[state.tour.sceneIdx]);
+        }
+      }
+    }
+
+    function nextTourScene() {
+      if (!state.tour.active) return;
+      if (state.tour.sceneIdx + 1 < TOUR_SCENES.length) {
+        loadTourScene(state.tour.sceneIdx + 1);
+      } else {
+        loadTourScene(0);
+      }
+    }
+
+    function prevTourScene() {
+      if (!state.tour.active) return;
+      if (state.tour.sceneElapsed > 4.0) {
+        loadTourScene(state.tour.sceneIdx);
+      } else {
+        loadTourScene(Math.max(0, state.tour.sceneIdx - 1));
+      }
+    }
+
+    function jumpToTourStage(stageNum) {
+      const targetIdx = TOUR_SCENES.findIndex(s => s.stage === stageNum);
+      if (targetIdx >= 0) {
+        if (!state.tour.active) {
+          startAutoPresentation(targetIdx);
+        } else {
+          loadTourScene(targetIdx);
+        }
+      }
+    }
+
+    function toggleTourMute() {
+      state.tour.muted = !state.tour.muted;
+      const muteBtn = document.getElementById('btn-tour-mute');
+      const vBars = document.getElementById('tour-voice-bars');
+      if (state.tour.muted) {
+        if (muteBtn) muteBtn.textContent = '🔇 Đã tắt tiếng';
+        vBars?.classList.add('paused');
+        stopCurrentAudio();
+      } else {
+        if (muteBtn) muteBtn.textContent = '🔊 Giọng AI';
+        if (!state.tour.paused) {
+          vBars?.classList.remove('paused');
+          const curSc = TOUR_SCENES[state.tour.sceneIdx];
+          if (curSc) {
+            playSceneAudio(curSc);
+            if (state.tour.audioEl) {
+              try { state.tour.audioEl.currentTime = Math.min(curSc.durationSec - 0.5, state.tour.sceneElapsed); } catch (_) {}
+            }
+          }
+        }
+      }
+    }
+
+    function cycleTourSpeed() {
+      const speeds = [1.0, 1.2, 1.4, 0.85];
+      const curIdx = speeds.indexOf(state.tour.speed);
+      state.tour.speed = speeds[(curIdx + 1) % speeds.length];
+      const spBtn = document.getElementById('btn-tour-speed');
+      if (spBtn) spBtn.textContent = `${state.tour.speed}x`;
+      if (state.tour.audioEl) {
+        state.tour.audioEl.playbackRate = state.tour.speed;
+      }
+    }
+
+    function easeInOutQuad(t) {
+      return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
+
+    function updateTourDirectorFrame(nowTs) {
+      if (!state.tour.active) return;
+      const sc = TOUR_SCENES[state.tour.sceneIdx];
+      if (!sc) return;
+
+      const dt = Math.min(0.1, Math.max(0.001, (nowTs - (state.tour.lastFrameTs || nowTs)) / 1000));
+      state.tour.lastFrameTs = nowTs;
+
+      if (!state.tour.paused) {
+        const audio = state.tour.audioEl;
+        if (audio && !audio.paused && Number.isFinite(audio.duration) && audio.duration > 1) {
+          state.tour.sceneElapsed = audio.currentTime;
+          state.tour.sceneProgress = Math.min(1, audio.currentTime / audio.duration);
+        } else {
+          state.tour.sceneElapsed += dt * state.tour.speed;
+          state.tour.sceneProgress = Math.min(1, state.tour.sceneElapsed / (sc.durationSec || 25));
+          if (state.tour.sceneProgress >= 1) {
+            advanceToNextTourScene();
+            return;
+          }
+        }
+      }
+
+      const p = state.tour.sceneProgress;
+      const progFill = document.getElementById('tour-prog-fill');
+      if (progFill) progFill.style.width = `${(p * 100).toFixed(1)}%`;
+      renderTourSubtitles(sc, p);
+
+      const c = state.cam;
+
+      if (sc.phase === 'ORBIT_OVERVIEW') {
+        const tr = state.trains[0];
+        tr.prog = sc.trainStartProg + (sc.trainEndProg - sc.trainStartProg) * easeInOutQuad(p);
+        if (!isDown) {
+          c.goalTx = -1.5;
+          c.goalTy = 1.6;
+          c.goalTz = 2.5;
+          c.goalDist = 66 - Math.sin(p * Math.PI) * 8;
+          c.goalPitch = 0.58;
+          c.goalYaw = -0.42 + p * 0.72;
+        }
+      } else if (sc.phase === 'TRAIN_TRANSIT') {
+        const trIdx = sc.line === '3' ? 2 : 0;
+        const tr = state.trains[trIdx];
+        const spline = sc.line === '3' ? LINE_3_SPLINE : LINE_2A_SPLINE;
+        const eased = easeInOutQuad(p);
+        tr.prog = sc.trainStartProg + (sc.trainEndProg - sc.trainStartProg) * eased;
+        tr.dir = sc.trainEndProg >= sc.trainStartProg ? 1 : -1;
+
+        const tp = sampleSpline(spline, tr.prog);
+        if (!isDown) {
+          c.goalTx = tp.x;
+          c.goalTy = tp.y + 1.35;
+          c.goalTz = tp.z;
+          c.goalDist = 23;
+          c.goalPitch = 0.42;
+          c.goalYaw += 0.0024;
+        }
+      } else if (sc.phase === 'STATION_STOP_ORBIT') {
+        const trIdx = sc.line === '3' ? 2 : 0;
+        state.trains[trIdx].prog = sc.trainEndProg;
+
+        // Automatically switch from comparison project (<500m / >1500m) to sweet-spot project mid-narration
+        if (sc.secondProjectId && p >= (sc.switchAtProg || 0.48) && !state.tour.switchedMidScene) {
+          state.tour.switchedMidScene = true;
+          const nextProj = PROJECTS.find(item => item.id === sc.secondProjectId);
+          if (nextProj) {
+            state.selectedProject = nextProj;
+            openSheet('project');
+            playStationChime(false);
+          }
+        }
+
+        const st = STATIONS.find(s => s.id === sc.stationId);
+        const proj = state.selectedProject || PROJECTS[0];
+        const centerWx = st ? (st.x * 0.55 + proj.x * 0.45) : proj.x;
+        const centerWz = st ? (st.z * 0.55 + proj.z * 0.45) : proj.z;
+
+        if (!isDown) {
+          // Continuous 360° 3D orbital rotation around the stopped station & buildings
+          c.goalYaw += 0.0058;
+          c.goalPitch = 0.49 + Math.sin(p * Math.PI * 2) * 0.05;
+          c.goalDist = sc.orbitDist || 29;
+          const sheetOpen = !document.getElementById('info-sheet')?.classList.contains('closed');
+          const desktopOffset = (window.innerWidth > 820 && sheetOpen) ? 4.8 : 0;
+          c.goalTx = centerWx + desktopOffset * Math.cos(c.yaw);
+          c.goalTy = 2.0;
+          c.goalTz = centerWz + desktopOffset * Math.sin(c.yaw);
+        }
+      } else if (sc.phase === 'SIMULATION_ORBIT') {
+        let dm = 750;
+        if (p < 0.26) {
+          dm = Math.round(200 + (p / 0.26) * 230); // 200m -> 430m (<500m Nuisance Zone)
+        } else if (p < 0.68) {
+          dm = Math.round(520 + ((p - 0.26) / 0.42) * 430); // 520m -> 950m (500-1000m Golden Sweet Spot)
+        } else if (p < 0.88) {
+          dm = Math.round(1050 + ((p - 0.68) / 0.20) * 600); // 1050m -> 1650m (Decay to 0%)
+        } else {
+          dm = 750;
+        }
+        dm = Math.round(dm / 25) * 25;
+        if (state.experimentDist !== dm) {
+          updateExperimentDist(dm);
+        }
+
+        const activeProj = state.selectedProject || PROJECTS[0];
+        if (!isDown && activeProj) {
+          c.goalYaw += 0.0055;
+          c.goalPitch = 0.48;
+          c.goalDist = 32;
+          c.goalTx = activeProj.sx + 3.2;
+          c.goalTy = 2.2;
+          c.goalTz = activeProj.sz + 1.6;
+        }
+      } else if (sc.phase === 'ECONOMETRIC_ORBIT') {
+        if (sc.id === 'scene_11') {
+          const desiredMode = p < 0.20 ? 'raw' : 'bonus';
+          if (state.proofView !== desiredMode) setProofView(desiredMode);
+        } else if (sc.id === 'scene_12') {
+          if (sc.secondSummaryTab && p >= (sc.switchTabAtProg || 0.38) && !state.tour.switchedMidScene) {
+            state.tour.switchedMidScene = true;
+            switchSummaryTab(sc.secondSummaryTab);
+          }
+        }
+
+        const st = state.selectedProject || PROJECTS[0];
+        if (!isDown && st) {
+          c.goalYaw += 0.0046;
+          c.goalPitch = 0.50;
+          c.goalDist = 38;
+          const dOff = window.innerWidth > 820 ? 7.5 : 3.0;
+          c.goalTx = st.sx + 4.0 + dOff * Math.cos(c.yaw);
+          c.goalTy = 2.5;
+          c.goalTz = st.sz + 2.0 + dOff * Math.sin(c.yaw);
+        }
+      } else if (sc.phase === 'VALUATION_FINALE') {
+        const walkInp = document.getElementById('c-walk');
+        if (walkInp) {
+          const targetWalk = p < 0.18 ? 1600 : (p < 0.32 ? 300 : 750);
+          if (Number(walkInp.value) !== targetWalk) {
+            walkInp.value = String(targetWalk);
+            runCalc();
+          }
+        }
+        if (!isDown) {
+          c.goalYaw += 0.0042;
+          c.goalPitch = 0.56;
+          c.goalDist = 56;
+          c.goalTx = 2;
+          c.goalTy = 2.0;
+          c.goalTz = 3;
+        }
+      }
+    }
+
+    // =========================================================================
     // 6. SOLID ARCHITECTURAL 3D ENGINE & COLLISION-FREE LABELS
     // =========================================================================
     const canvas = document.getElementById('canvas3d');
@@ -1740,9 +2895,18 @@
       const sheetEl = document.getElementById('info-sheet');
       if (sheetEl && !sheetEl.classList.contains('closed')) {
         const sLeft = cw > 640 ? (cw - 522) : 0;
-        const sTop = cw > 640 ? 96 : (ch * 0.20);
+        const sTop = cw > 640 ? 96 : (ch * 0.48);
         if (right > sLeft && bottom > sTop) {
           return false;
+        }
+      }
+
+      // Never draw 3D canvas labels that collide with the active #tour-dock Teleprompter!
+      if (state.tour && state.tour.active) {
+        if (cw > 820) {
+          if (left < 590 && bottom > ch - 235) return false;
+        } else {
+          if (top < 275) return false;
         }
       }
 
@@ -2053,14 +3217,25 @@
       placedLabels = [];
       const isOSM = state.mapTheme === 'osm';
 
-      state.trains.forEach(tr => {
+      updateTourDirectorFrame(performance.now());
+      const curTourSc = state.tour.active ? TOUR_SCENES[state.tour.sceneIdx] : null;
+      const activeTourTrainIdx = (curTourSc && curTourSc.line === '3') ? 2 : 0;
+
+      state.trains.forEach((tr, idx) => {
+        if (
+          state.tour.active &&
+          idx === activeTourTrainIdx &&
+          (state.tour.phase === 'ORBIT_OVERVIEW' || state.tour.phase === 'TRAIN_TRANSIT' || state.tour.phase === 'STATION_STOP_ORBIT')
+        ) {
+          return;
+        }
         tr.prog += tr.dir * tr.speed;
         if (tr.prog >= 0.96) { tr.prog = 0.96; tr.dir = -1; }
         if (tr.prog <= 0.04) { tr.prog = 0.04; tr.dir = 1; }
       });
 
       const c = state.cam;
-      if (state.followTrain) {
+      if (state.followTrain && !state.tour.active) {
         const tp = sampleSpline(LINE_2A_SPLINE, state.trains[0].prog);
         c.goalTx = tp.x; c.goalTy = tp.y + 1.2; c.goalTz = tp.z;
         c.goalDist = 22; c.goalPitch = 0.42;
@@ -2170,6 +3345,18 @@
           `rgba(251, 113, 133, ${(1 - wavePhase) * 0.75})`,
           2.0
         );
+
+        // 360° Orbital Compass Ring when stopped at station in Autonomous Presentation
+        if (state.tour.active && (state.tour.phase === 'STATION_STOP_ORBIT' || state.tour.phase === 'SIMULATION_ORBIT')) {
+          const orbitPulse = 0.45 + 0.35 * Math.sin(state.time * 3.2);
+          drawGroundEllipse(
+            c.goalTx, 0.15, c.goalTz,
+            9.6, 9.6,
+            null,
+            `rgba(245, 158, 11, ${orbitPulse.toFixed(2)})`,
+            2.2
+          );
+        }
       }
 
       // 7. 3D CURVED METRO VIADUCTS
@@ -2316,7 +3503,7 @@
       });
 
       // 8D. Streamlined 4-Car Articulated 3D Metro Trains
-      state.trains.forEach(tr => {
+      state.trains.forEach((tr, idx) => {
         const spline = tr.line === '2A' ? LINE_2A_SPLINE : LINE_3_SPLINE;
         const trainPal = tr.line === '2A'
           ? { top: '#ffffff', front: '#059669', right: '#f1f5f9', back: '#059669', left: '#ffffff', stroke: '#10b981' }
@@ -2329,15 +3516,34 @@
           if (!pt) continue;
 
           const isLeadCar = (tr.dir > 0 && car === 1.5) || (tr.dir < 0 && car === -1.5);
+          const isTourFocusTrain = state.tour.active && idx === activeTourTrainIdx && (state.tour.phase === 'TRAIN_TRANSIT' || state.tour.phase === 'STATION_STOP_ORBIT');
 
           renderQueue.push({
             depth: pt.depth - 1.2,
             draw: () => {
-              drawOrientedBox3D(pos.x, pos.y + 0.16, pos.z, pos.tx, pos.tz, 1.32, 0.70, 0.78, trainPal, {
-                highlight: false,
+              const carBox = drawOrientedBox3D(pos.x, pos.y + 0.16, pos.z, pos.tx, pos.tz, 1.32, 0.70, 0.78, trainPal, {
+                highlight: isTourFocusTrain,
                 isTrainCar: true,
                 liveryColor: tr.color
               });
+
+              if (isTourFocusTrain && car === 0.5 && carBox) {
+                const stObj = curTourSc && curTourSc.stationId ? STATIONS.find(s => s.id === curTourSc.stationId) : null;
+                const stName = stObj ? stObj.name : `Tuyến ${tr.line}`;
+                const badgeText = state.tour.phase === 'TRAIN_TRANSIT'
+                  ? `🚝 TÀU TUYẾN ${tr.line} ĐANG DI CHUYỂN • HƯỚNG TỚI ${stName.toUpperCase()}`
+                  : `🛑 TÀU DỪNG TẠI ${stName.toUpperCase()} • ĐANG XOAY 3D 360°`;
+                pendingLabels.push({
+                  priority: 0,
+                  text: badgeText,
+                  x: carBox.roofX,
+                  y: carBox.roofY - 22,
+                  bg: state.tour.phase === 'TRAIN_TRANSIT' ? 'rgba(6, 78, 59, 0.95)' : 'rgba(120, 53, 15, 0.95)',
+                  fg: state.tour.phase === 'TRAIN_TRANSIT' ? '#6ee7b7' : '#fde68a',
+                  border: state.tour.phase === 'TRAIN_TRANSIT' ? '#10b981' : '#f59e0b',
+                  font: 'bold 12px sans-serif'
+                });
+              }
 
               if (isLeadCar) {
                 const dirSign = tr.dir > 0 ? 1 : -1;
@@ -2363,6 +3569,7 @@
       PROJECTS.forEach(p => {
         if (state.step === 2 && p.id === activeProj.id) return;
         const isSel = state.selectedProject && state.selectedProject.id === p.id;
+        const isTourPair = state.tour.active && curTourSc && (curTourSc.firstProjectId === p.id || curTourSc.secondProjectId === p.id);
 
         const baseH = (state.step === 3 && state.proofView === 'bonus')
           ? 4.2
@@ -2401,58 +3608,58 @@
             } else if (p.twin) {
               drawOrientedBox3D(p.x, 0, p.z, 1, 0, 2.8, 1.05, 1.9, pal, { shadow: true });
               drawOrientedBox3D(p.x - 0.65, 1.05, p.z, 1, 0, 1.15, (totalH - 1.05) * 0.86, 1.35, pal, {
-                highlight: isSel,
+                highlight: isSel || isTourPair,
                 windows: true,
                 windowColor: 'rgba(255, 255, 255, 0.36)'
               });
               const box = drawOrientedBox3D(p.x + 0.65, 1.05, p.z, 1, 0, 1.25, totalH - 1.05, 1.45, pal, {
-                highlight: isSel,
+                highlight: isSel || isTourPair,
                 windows: true,
                 windowColor: 'rgba(255, 255, 255, 0.42)'
               });
               if (!box) return;
-              const crown = drawOrientedBox3D(p.x + 0.65, totalH, p.z, 1, 0, 0.85, 0.55, 0.95, pal, { highlight: isSel });
+              const crown = drawOrientedBox3D(p.x + 0.65, totalH, p.z, 1, 0, 0.85, 0.55, 0.95, pal, { highlight: isSel || isTourPair });
               const topX = crown ? crown.roofX : box.roofX;
               const topY = crown ? crown.roofY : box.roofY;
 
               hitBoxes.push({ x: box.x, y: box.y, r: box.r + 8, depth: box.depth, type: 'project', data: p });
 
-              if (isSel || box.depth < 62) {
+              if (isSel || isTourPair || box.depth < 62) {
                 pendingLabels.push({
-                  priority: isSel ? 1 : 2,
+                  priority: isSel ? 1 : (isTourPair ? 1 : 2),
                   text: isSel ? `★ ${p.name.split(' (')[0]} • ${p.price}tr (n=${p.nObs})` : `${p.name.split(' (')[0]} (${p.price}tr • n=${p.nObs})`,
                   x: topX,
                   y: topY - 14,
-                  bg: isSel ? '#10b981' : 'rgba(15, 23, 42, 0.92)',
+                  bg: isSel ? '#10b981' : (isTourPair ? 'rgba(30, 58, 138, 0.94)' : 'rgba(15, 23, 42, 0.92)'),
                   fg: isSel ? '#022c22' : '#ffffff',
                   border: isSel ? '#ffffff' : pal.front,
-                  font: isSel ? 'bold 12px sans-serif' : '600 12px sans-serif'
+                  font: (isSel || isTourPair) ? 'bold 12px sans-serif' : '600 12px sans-serif'
                 });
               }
             } else {
               drawOrientedBox3D(p.x, 0, p.z, 1, 0, 2.2, 1.05, 2.2, pal, { shadow: true });
               const box = drawOrientedBox3D(p.x, 1.05, p.z, 1, 0, 1.65, totalH - 1.05, 1.65, pal, {
-                highlight: isSel,
+                highlight: isSel || isTourPair,
                 windows: true,
                 windowColor: 'rgba(255, 255, 255, 0.40)'
               });
               if (!box) return;
-              const crown = drawOrientedBox3D(p.x, totalH, p.z, 1, 0, 1.05, 0.60, 1.05, pal, { highlight: isSel });
+              const crown = drawOrientedBox3D(p.x, totalH, p.z, 1, 0, 1.05, 0.60, 1.05, pal, { highlight: isSel || isTourPair });
               const topX = crown ? crown.roofX : box.roofX;
               const topY = crown ? crown.roofY : box.roofY;
 
               hitBoxes.push({ x: box.x, y: box.y, r: box.r + 6, depth: box.depth, type: 'project', data: p });
 
-              if (isSel || box.depth < 62) {
+              if (isSel || isTourPair || box.depth < 62) {
                 pendingLabels.push({
-                  priority: isSel ? 1 : 2,
+                  priority: isSel ? 1 : (isTourPair ? 1 : 2),
                   text: isSel ? `★ ${p.name.split(' (')[0]} • ${p.price}tr (n=${p.nObs})` : `${p.name.split(' (')[0]} (${p.price}tr • n=${p.nObs})`,
                   x: topX,
                   y: topY - 14,
-                  bg: isSel ? '#10b981' : 'rgba(15, 23, 42, 0.92)',
+                  bg: isSel ? '#10b981' : (isTourPair ? 'rgba(30, 58, 138, 0.94)' : 'rgba(15, 23, 42, 0.92)'),
                   fg: isSel ? '#022c22' : '#ffffff',
                   border: isSel ? '#ffffff' : pal.front,
-                  font: isSel ? 'bold 12px sans-serif' : '600 12px sans-serif'
+                  font: (isSel || isTourPair) ? 'bold 12px sans-serif' : '600 12px sans-serif'
                 });
               }
             }
@@ -2554,6 +3761,29 @@
             border: '#10b981',
             font: 'bold 12px sans-serif'
           });
+        }
+
+        // Also draw comparison project's network connection during STATION_STOP_ORBIT matched-pair stops
+        if (state.tour.active && state.tour.phase === 'STATION_STOP_ORBIT' && curTourSc && curTourSc.firstProjectId && curTourSc.secondProjectId) {
+          const otherId = activeProj.id === curTourSc.firstProjectId ? curTourSc.secondProjectId : curTourSc.firstProjectId;
+          const otherProj = PROJECTS.find(p => p.id === otherId);
+          if (otherProj) {
+            const oBPt = project(otherProj.x, 0.18, otherProj.z);
+            const oMidPt = project(otherProj.sx, 0.18, otherProj.z);
+            const oSPt = project(otherProj.sx, 0.18, otherProj.sz);
+            if (oBPt && oMidPt && oSPt) {
+              ctx.save();
+              ctx.strokeStyle = otherProj.walk <= 1000 ? 'rgba(56, 189, 248, 0.85)' : 'rgba(244, 63, 94, 0.85)';
+              ctx.lineWidth = 2.4;
+              ctx.setLineDash([6, 4]);
+              ctx.beginPath();
+              ctx.moveTo(oBPt.x, oBPt.y);
+              ctx.lineTo(oMidPt.x, oMidPt.y);
+              ctx.lineTo(oSPt.x, oSPt.y);
+              ctx.stroke();
+              ctx.restore();
+            }
+          }
         }
 
         ctx.save();
@@ -2769,7 +3999,7 @@
       pinchDist = 0;
     }, { passive: true });
 
-    // Optional URL parameter support for automated visual testing (?step=2, ?proj=P5, ?tab=districts)
+    // Optional URL parameter support for automated visual testing & direct presentation launch
     const params = new URLSearchParams(window.location.search);
     if (params.get('step')) {
       setStep(Number(params.get('step')));
@@ -2791,6 +4021,11 @@
     }
     if (params.get('tab')) {
       switchSummaryTab(params.get('tab'));
+    }
+    if (params.get('present') === '1' || params.get('tour') === '1' || params.get('stage')) {
+      const initStage = Number(params.get('stage')) || 1;
+      const targetIdx = Math.max(0, TOUR_SCENES.findIndex(s => s.stageNum === initStage));
+      startAutoPresentation(targetIdx);
     }
 
     requestAnimationFrame(render);

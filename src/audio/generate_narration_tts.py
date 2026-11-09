@@ -1,0 +1,437 @@
+#!/usr/bin/env python3
+"""
+Module tổng hợp giọng đọc thuyết minh khoa học tự động (Text-to-Speech) cho Hanoi Metro 3D Odyssey.
+Hỗ trợ 2 cơ chế:
+1. Microsoft Edge Neural TTS (vi-VN-HoaiMyNeural) khi chạy trên môi trường CI/CD trực tiếp.
+2. Google Vietnamese TTS (translate_tts + ffmpeg) tạo tệp MP3 chuẩn cho toàn bộ 13 phân cảnh thuộc 8 chặng.
+Xuất ra:
+- assets/audio/scene_01.mp3 .. assets/audio/scene_13.mp3
+- assets/audio/narration_manifest.json (chứa toàn bộ kịch bản, thời lượng thực tế và thông số đạo diễn 3D)
+"""
+
+import json
+import os
+import re
+import subprocess
+import tempfile
+import time
+import urllib.parse
+import urllib.request
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+AUDIO_DIR = BASE_DIR / "assets" / "audio"
+
+SCENES = [
+    {
+        "id": "scene_01",
+        "stage": 1,
+        "stageTitle": "Chặng 1/8: Toàn Cảnh Không Gian 3D & Kiến Trúc 3 Tầng",
+        "subTitle": "Tổng quan N = 16.471 căn hộ • 20 Ga Metro • 3 Tầng Không Gian",
+        "phase": "ORBIT_OVERVIEW",
+        "step": 1,
+        "line": "2A",
+        "trainStartProg": 0.00,
+        "trainEndProg": 0.16,
+        "text": (
+            "Chào mừng Hội đồng và quý vị đến với hệ thống trình bày khoa học tự động ba chiều: "
+            "Định lượng mối liên hệ giữa khả năng tiếp cận giao thông công cộng và giá chào bán căn hộ tại Hà Nội "
+            "bằng mô hình Hedonic Pricing và hệ thống thông tin địa lý G I S. "
+            "Nghiên cứu phân tích mười sáu nghìn bốn trăm bảy mươi mốt tin đăng căn hộ dọc hành lang Tuyến Metro hai A "
+            "Cát Linh Hà Đông và Tuyến số ba Nhổn Ga Hà Nội. "
+            "Thông qua kỹ thuật ánh xạ tọa độ vật lý bất biến, mô hình tích hợp đồng thời ba tầng không gian: "
+            "bốn Vành đai Đô thị, bảy Tiểu thị trường lịch sử, và hai mươi mốt Phường mới trực thuộc Thành phố Hà Nội "
+            "theo mô hình chính quyền địa phương hai cấp."
+        ),
+    },
+    {
+        "id": "scene_02",
+        "stage": 2,
+        "stageTitle": "Chặng 2/8: Hành Trình Tuyến 2A (Cát Linh → Thượng Đình)",
+        "subTitle": "Mô phỏng đoàn tàu di chuyển trên cầu cạn • Kiểm chứng giả thuyết tuyến tính",
+        "phase": "TRAIN_TRANSIT",
+        "step": 1,
+        "line": "2A",
+        "trainStartProg": 0.16,
+        "trainEndProg": 0.4815,
+        "text": (
+            "Bây giờ, chúng ta cùng theo chân đoàn tàu điện Tuyến hai A di chuyển trên cầu cạn từ ga Cát Linh, "
+            "lướt qua La Thành, Thái Hà và đường Láng để tiến về nút giao Ngã Tư Sở. "
+            "Dọc hành lang đông đúc này, câu hỏi khoa học cốt lõi đặt ra là: "
+            "Liệu căn hộ càng nằm sát chân ga tàu điện trên cao thì giá trị bất động sản có càng tăng mạnh "
+            "như giả định tuyến tính truyền thống hay không?"
+        ),
+    },
+    {
+        "id": "scene_03",
+        "stage": 2,
+        "stageTitle": "Chặng 2/8: Dừng Tại Ga Thượng Đình — Xoay 3D 360° Phân Tích",
+        "subTitle": "Đối chứng cặp dự án: King Palace (<500m) vs. Royal City (500–1000m)",
+        "phase": "STATION_STOP_ORBIT",
+        "step": 1,
+        "line": "2A",
+        "stationId": "2A-05",
+        "projectId": "P1",
+        "compareProjectId": "P4",
+        "trainStartProg": 0.4815,
+        "trainEndProg": 0.4815,
+        "text": (
+            "Đoàn tàu vừa dừng lại tại Ga Thượng Đình thuộc Phường Thanh Xuân mới. "
+            "Khi góc máy ba chiều tự động xoay quanh nhà ga, chúng ta quan sát thấy một cặp đối chứng thực nghiệm điển hình. "
+            "Tòa nhà King Palace nằm ở cự ly đi bộ bốn trăm mười mét, tức trong vòng tròn đỏ dưới năm trăm mét sát cầu cạn, "
+            "chỉ đạt giá trung bình tám mươi hai phẩy năm triệu đồng một mét vuông do chịu ngoại ứng tiếng ồn đoàn tàu, "
+            "rung chấn và ùn tắc giao thông dưới gầm ga. "
+            "Ngược lại, tổ hợp Royal City với bốn trăm mười hai căn hộ, có khoảng cách chim bay năm trăm sáu mươi tám mét "
+            "nhưng cự ly đi bộ thực tế qua cầu bộ hành là bảy trăm năm mươi mét, nằm trong vành đai xanh ngọc từ năm trăm đến một nghìn mét, "
+            "đạt tới tám mươi tám phẩy bảy triệu đồng một mét vuông, hưởng trọn thặng dư vốn hóa cộng ba phẩy sáu mươi mốt đến ba phẩy chín mươi mốt phần trăm."
+        ),
+    },
+    {
+        "id": "scene_04",
+        "stage": 3,
+        "stageTitle": "Chặng 3/8: Hành Trình Tuyến 2A (Thượng Đình → Hà Đông)",
+        "subTitle": "Đoàn tàu vượt Vành đai 3 tiến vào Phân vùng 4 Tây Nam (UZ4)",
+        "phase": "TRAIN_TRANSIT",
+        "step": 1,
+        "line": "2A",
+        "trainStartProg": 0.4815,
+        "trainEndProg": 0.7778,
+        "text": (
+            "Rời Ga Thượng Đình, đoàn tàu Tuyến hai A tiếp tục vượt nút giao Vành đai ba, đi qua Phùng Khoang, Văn Quán "
+            "để tiến vào phân vùng bốn: Hành lang đô thị phía Tây Nam thuộc các Phường Hà Đông, Dương Nội và Kiến Hưng mới. "
+            "Đây là khu vực có nguồn cung căn hộ lớn với ba nghìn ba trăm sáu mươi mốt quan sát "
+            "và mặt bằng giá trung bình sáu mươi phẩy không chín triệu đồng một mét vuông."
+        ),
+    },
+    {
+        "id": "scene_05",
+        "stage": 3,
+        "stageTitle": "Chặng 3/8: Dừng Tại Ga Hà Đông — Xoay 3D 360° Kiểm Chứng Suy Giảm",
+        "subTitle": "Đối chứng Seasons Avenue (740m) • The Pride (890m) vs. KĐT Xa La (2.100m)",
+        "phase": "STATION_STOP_ORBIT",
+        "step": 1,
+        "line": "2A",
+        "stationId": "2A-09",
+        "projectId": "P9",
+        "compareProjectId": "P12",
+        "trainStartProg": 0.7778,
+        "trainEndProg": 0.7778,
+        "text": (
+            "Tại điểm dừng Ga Hà Đông, phép xoay ba chiều cho thấy quy luật suy giảm theo cự ly rất rõ nét. "
+            "Các dự án nằm trong vành đai đi bộ từ sáu đến mười phút như Seasons Avenue ở cự ly bảy trăm bốn mươi mét "
+            "và The Pride ở cự ly tám trăm chín mươi mét đều hưởng mức tăng giá có ý nghĩa thống kê. "
+            "Tuy nhiên, khi ra tới Khu đô thị Xa La ở cự ly đi bộ hai nghìn một trăm mét, "
+            "vượt quá ngưỡng đi bộ mười lăm phút trong điều kiện khí hậu nhiệt đới, cư dân chuyển hẳn sang sử dụng xe máy cá nhân, "
+            "khiến hiệu ứng vốn hóa của tàu điện hội tụ hoàn toàn về không phần trăm."
+        ),
+    },
+    {
+        "id": "scene_06",
+        "stage": 4,
+        "stageTitle": "Chặng 4/8: Chuyển Tuyến Sang Metro Số 3 (Nhổn → Cầu Diễn)",
+        "subTitle": "Mô phỏng đoàn tàu Tuyến 3 trên cao dọc hành lang phía Tây (UZ3)",
+        "phase": "TRAIN_TRANSIT",
+        "step": 1,
+        "line": "3",
+        "trainStartProg": 0.00,
+        "trainEndProg": 0.2857,
+        "text": (
+            "Chuyển sang hành lang phía Tây, chúng ta theo dõi đoàn tàu Tuyến số ba màu xanh dương khởi hành từ Ga Nhổn, "
+            "di chuyển qua Minh Khai và Phú Diễn để tiến về Ga Cầu Diễn. "
+            "Đoạn trên cao của Tuyến số ba gồm tám nhà ga vận hành thương mại đã tạo nên trục giao thông huyết mạch "
+            "cho năm nghìn bảy trăm ba mươi hai căn hộ thuộc phân vùng đô thị hóa phía Tây."
+        ),
+    },
+    {
+        "id": "scene_07",
+        "stage": 4,
+        "stageTitle": "Chặng 4/8: Dừng Tại Ga Cầu Diễn — Xoay 3D 360° Phân Tích Goldmark City",
+        "subTitle": "Kiểm chứng tính nhất quán của Vành đai tối ưu (500–1000m) trên Tuyến 3",
+        "phase": "STATION_STOP_ORBIT",
+        "step": 1,
+        "line": "3",
+        "stationId": "3-04",
+        "projectId": "P2",
+        "trainStartProg": 0.2857,
+        "trainEndProg": 0.2857,
+        "text": (
+            "Khi đoàn tàu Tuyến số ba dừng tại Ga Cầu Diễn thuộc Phường Phú Diễn mới, "
+            "góc xoay ba trăm sáu mươi độ làm nổi bật tổ hợp Goldmark City với ba trăm tám mươi lăm căn hộ trong mẫu nghiên cứu. "
+            "Với cự ly đi bộ mạng lưới sáu trăm tám mươi mét, tương đương khoảng tám phút đi bộ tới nhà ga, "
+            "dự án đạt mức giá trung bình tám mươi tư phẩy hai triệu đồng một mét vuông, cao hơn mặt bằng chung khu vực Bắc Từ Liêm "
+            "và khẳng định hiệu ứng vành đai vàng từ năm trăm đến một nghìn mét xuất hiện nhất quán trên cả hai tuyến đường sắt đô thị."
+        ),
+    },
+    {
+        "id": "scene_08",
+        "stage": 5,
+        "stageTitle": "Chặng 5/8: Hành Trình Tuyến 3 (Cầu Diễn → ĐH Quốc Gia)",
+        "subTitle": "Đoàn tàu vượt nút giao Mai Dịch tiến vào lõi thương mại Xuân Thủy – Cầu Giấy",
+        "phase": "TRAIN_TRANSIT",
+        "step": 1,
+        "line": "3",
+        "trainStartProg": 0.2857,
+        "trainEndProg": 0.4762,
+        "text": (
+            "Từ Ga Cầu Diễn, đoàn tàu Tuyến số ba tiếp tục lướt qua Ga Lê Đức Thọ, "
+            "vượt cầu cạn Mai Dịch để tiến vào trục Xuân Thủy Cầu Giấy, "
+            "một trong những tiểu thị trường căn hộ sôi động nhất Hà Nội với gần hai nghìn chín trăm quan sát."
+        ),
+    },
+    {
+        "id": "scene_09",
+        "stage": 5,
+        "stageTitle": "Chặng 5/8: Dừng Tại Ga ĐH Quốc Gia — Xoay 3D 360° Đối Chứng",
+        "subTitle": "Indochina Plaza (290m) & Discovery (320m) vs. Mipec Rubik 360 (620m)",
+        "phase": "STATION_STOP_ORBIT",
+        "step": 1,
+        "line": "3",
+        "stationId": "3-06",
+        "projectId": "P5",
+        "compareProjectId": "P6",
+        "trainStartProg": 0.4762,
+        "trainEndProg": 0.4762,
+        "text": (
+            "Dừng chân tại Ga Đại học Quốc Gia thuộc Phường Cầu Giấy mới, góc máy xoay ba chiều minh họa rõ bằng chứng thực nghiệm thứ hai "
+            "về hiệu ứng chữ U ngược. Tòa tháp Indochina Plaza ở cự ly đi bộ hai trăm chín mươi mét và Discovery Complex ở cự ly ba trăm hai mươi mét "
+            "nằm ngay sát mặt cầu cạn Xuân Thủy. Sau khi kiểm soát chất lượng công trình và vị trí nội đô, "
+            "phần thặng dư thuần túy do đứng sát ga dưới năm trăm mét bị triệt tiêu về mức không phẩy mười tám đến không phẩy bốn mươi mốt phần trăm, "
+            "không có ý nghĩa thống kê. Ngược lại, tổ hợp Mipec Rubik ba sáu mươi lùi sâu vào khuôn viên ở cự ly đi bộ sáu trăm hai mươi mét "
+            "lại tách biệt hoàn toàn khỏi tiếng ồn và đạt mức thặng dư vốn hóa tối ưu gần bốn phần trăm."
+        ),
+    },
+    {
+        "id": "scene_10",
+        "stage": 6,
+        "stageTitle": "Chặng 6/8: Mô Phỏng Thực Nghiệm Cự Ly 3D Động (150m → 1.750m)",
+        "subTitle": "Biến thiên phi tuyến chiều cao thặng dư khi trượt tòa nhà dọc mạng lưới GIS",
+        "phase": "SIMULATION_ORBIT",
+        "step": 2,
+        "line": "2A",
+        "stationId": "2A-05",
+        "projectId": "P1",
+        "text": (
+            "Bước sang giai đoạn hai: Mô phỏng tham số cự ly ba chiều. "
+            "Hãy quan sát tòa nhà kiểm thử tự động dịch chuyển dọc theo mạng lưới đi bộ G I S từ chân nhà ga ra xa, "
+            "trong khi góc máy xoay xung quanh. Ở cự ly hai trăm năm mươi mét sát cầu cạn, khối thặng dư trên đỉnh tòa nhà bị nén thấp "
+            "vì ngoại ứng tiếng ồn. Ngay khi tòa nhà tiến vào vành đai vàng từ năm trăm đến một nghìn mét, tương ứng sáu đến mười phút đi bộ, "
+            "khối giá trị gia tăng vọt lên màu vàng ngọc với mức cực đại cộng ba phẩy chín mươi mốt phần trăm. "
+            "Khi trượt tiếp ra vùng đệm một nghìn hai trăm năm mươi mét và ngoài một nghìn năm trăm mét, lợi ích đi bộ suy giảm nhanh chóng về không."
+        ),
+    },
+    {
+        "id": "scene_11",
+        "stage": 7,
+        "stageTitle": "Chặng 7/8: Kiểm Định Kinh Tế Lượng Đa Tầng (M1–M6) & Chữ U Ngược",
+        "subTitle": "Đối chiếu hệ số hồi quy OLS HC3 trên 3 tầng không gian và mẫu Exact GPS",
+        "phase": "ECONOMETRIC_ORBIT",
+        "step": 3,
+        "line": "2A",
+        "summaryTab": "ols",
+        "text": (
+            "Ở giai đoạn ba, toàn bộ phát hiện không gian được kiểm định bằng hệ thống sáu mô hình kinh tế lượng Hedonic "
+            "với sai số chuẩn vững H C ba trên mười sáu nghìn bốn trăm bảy mươi mốt căn hộ. "
+            "Trên không gian ba chiều bên trái là vòm parabol chữ U ngược cùng bốn cột trụ hệ số hồi quy. "
+            "Bảng số liệu bên phải chứng minh: Khi đưa kiểm soát cố định không gian vào mô hình, thặng dư tại vành đai năm trăm đến một nghìn mét "
+            "hội tụ vững chắc ở mức ý nghĩa chín mươi chín phần trăm: đạt cộng ba phẩy sáu mươi mốt phần trăm ở Mô hình ba theo bốn Vành đai Đô thị, "
+            "cộng ba phẩy chín mươi mốt phần trăm ở Mô hình bốn theo bảy Tiểu thị trường lịch sử, "
+            "cộng ba phẩy bảy mươi ba phần trăm ở Mô hình năm theo hai mươi mốt Phường mới, "
+            "và cộng ba phẩy chín mươi phần trăm ở Mô hình sáu chỉ giữ mười nghìn năm trăm hai mươi mốt căn hộ định vị chính xác tòa nhà."
+        ),
+    },
+    {
+        "id": "scene_12",
+        "stage": 7,
+        "stageTitle": "Chặng 7/8: Giải Quyết Bài Toán Chính Quyền 2 Cấp, MAUP, VIF & Moran's I",
+        "subTitle": "Kiểm soát đa cộng tuyến (VIF = 3.238 < 5.0) & Khử tự tương quan không gian",
+        "phase": "ECONOMETRIC_ORBIT",
+        "step": 3,
+        "line": "2A",
+        "summaryTab": "method",
+        "text": (
+            "Tại sao nghiên cứu phải thiết kế kiến trúc không gian ba tầng khi Việt Nam thực hiện bỏ cấp trung gian quận huyện? "
+            "Theo lý thuyết bài toán đơn vị không gian khả biến M A U P, diện tích một phường nội đô rất nhỏ, trùng với bán kính đi bộ tới ga tàu; "
+            "nếu chỉ dùng biến giả cấp phường làm mô hình duy nhất sẽ gây hiện tượng kiểm soát quá mức làm hấp thụ phương sai. "
+            "Việc kết hợp Mô hình chính theo bốn Vành đai Đô thị với Mô hình hai mươi mốt Phường mới giúp hệ số phóng đại phương sai V I F tối đa "
+            "chỉ bằng ba phẩy hai mươi tư, nhỏ hơn nhiều ngưỡng năm chấm không, đồng thời khử hoàn toàn tự tương quan không gian "
+            "khi chỉ số Moran I giảm từ không phẩy tám mươi mốt về không phẩy không bốn tám, không còn ý nghĩa thống kê."
+        ),
+    },
+    {
+        "id": "scene_13",
+        "stage": 8,
+        "stageTitle": "Chặng 8/8: Định Giá Thực Tiễn & Khuyến Nghị Chính Sách TOD Hà Nội",
+        "subTitle": "Lượng hóa giá trị căn hộ (Hedonic Valuation) & Tổng kết Bảo vệ Khóa luận",
+        "phase": "VALUATION_FINALE",
+        "step": 4,
+        "line": "2A",
+        "text": (
+            "Cuối cùng, tại mô hình lượng hóa giá trị thực tiễn, với một căn hộ tiêu chuẩn chín mươi mét vuông tại Phường Thanh Xuân mới, "
+            "việc dịch chuyển từ ngoài vùng phục vụ vào vành đai đi bộ tối ưu bảy trăm năm mươi mét mang lại giá trị gia tăng ròng "
+            "khoảng hai trăm tám mươi sáu triệu đồng. "
+            "Từ bằng chứng thực nghiệm này, khóa luận kiến nghị Thành phố Hà Nội và Ủy ban nhân dân hai mươi mốt Phường mới "
+            "áp dụng cơ chế thu hồi giá trị đất tập trung vào vành đai vàng từ năm trăm đến một nghìn mét, "
+            "đồng thời bắt buộc thiết kế khoảng lùi xanh và tường chắn âm trong bán kính năm trăm mét sát cầu cạn. "
+            "Bài trình bày khoa học tự động xin kết thúc tại đây. Xin trân trọng cảm ơn Hội đồng và quý vị đã chú ý lắng nghe!"
+        ),
+    },
+]
+
+
+def split_text_chunks(text: str, max_len: int = 185) -> list[str]:
+    """Chia văn bản Tiếng Việt thành các mệnh đề ngắn <= max_len ký tự theo dấu câu."""
+    raw_parts = re.split(r"(?<=[.;,!?])\s+", text.strip())
+    chunks = []
+    cur = ""
+    for part in raw_parts:
+        if not part:
+            continue
+        if len(cur) + len(part) + 1 <= max_len:
+            cur = f"{cur} {part}".strip() if cur else part
+        else:
+            if cur:
+                chunks.append(cur)
+            if len(part) <= max_len:
+                cur = part
+            else:
+                words = part.split()
+                cur = ""
+                for w in words:
+                    if len(cur) + len(w) + 1 <= max_len:
+                        cur = f"{cur} {w}".strip() if cur else w
+                    else:
+                        chunks.append(cur)
+                        cur = w
+    if cur:
+        chunks.append(cur)
+    return chunks
+
+
+def try_synthesize_edge_tts(text: str, out_mp3: Path, voice: str = "vi-VN-HoaiMyNeural") -> bool:
+    """Thử tổng hợp bằng edge-tts nếu môi trường mạng hỗ trợ trực tiếp WebSocket."""
+    try:
+        res = subprocess.run(
+            [
+                "edge-tts",
+                "--voice",
+                voice,
+                "--rate=+5%",
+                "--text",
+                text,
+                "--write-media",
+                str(out_mp3),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=20,
+        )
+        return res.returncode == 0 and out_mp3.exists() and out_mp3.stat().st_size > 1000
+    except Exception:
+        return False
+
+
+def synthesize_google_tts_ffmpeg(text: str, out_mp3: Path) -> bool:
+    """Tổng hợp giọng đọc Tiếng Việt chuẩn qua Google TTS API và nối mượt bằng ffmpeg."""
+    chunks = split_text_chunks(text, max_len=180)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        part_files = []
+        for idx, chunk in enumerate(chunks):
+            q = urllib.parse.quote(chunk)
+            url = f"https://translate.google.com/translate_tts?ie=UTF-8&tl=vi&client=tw-ob&q={q}"
+            req = urllib.request.Request(
+                url,
+                headers={
+                    "User-Agent": (
+                        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                        "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+                    )
+                },
+            )
+            part_path = Path(tmpdir) / f"part_{idx:02d}.mp3"
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                part_path.write_bytes(resp.read())
+            part_files.append(part_path)
+            time.sleep(0.15)
+
+        concat_list = Path(tmpdir) / "concat.txt"
+        concat_list.write_text(
+            "\n".join(f"file '{p.as_posix()}'" for p in part_files),
+            encoding="utf-8",
+        )
+
+        # Nối các đoạn âm thanh và chuẩn hóa tốc độ 1.08x rõ ràng, chuyên nghiệp
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            str(concat_list),
+            "-filter:a",
+            "atempo=1.08",
+            "-ar",
+            "24000",
+            "-ac",
+            "1",
+            "-b:a",
+            "48k",
+            str(out_mp3),
+        ]
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return out_mp3.exists() and out_mp3.stat().st_size > 1000
+
+
+def get_audio_duration(mp3_path: Path) -> float:
+    """Đo chính xác thời lượng tệp MP3 (giây) bằng ffprobe."""
+    try:
+        res = subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                str(mp3_path),
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return round(float(res.stdout.strip()), 2)
+    except Exception:
+        return 18.0
+
+
+def main() -> None:
+    AUDIO_DIR.mkdir(parents=True, exist_ok=True)
+    manifest = []
+    use_edge = os.environ.get("PREFER_EDGE_TTS", "0") == "1"
+
+    print(f"🎙️ Bắt đầu tạo bộ âm thanh thuyết minh 13 phân cảnh (8 chặng) tại {AUDIO_DIR} ...")
+    for sc in SCENES:
+        out_mp3 = AUDIO_DIR / f"{sc['id']}.mp3"
+        ok = False
+        if use_edge:
+            ok = try_synthesize_edge_tts(sc["text"], out_mp3)
+        if not ok:
+            ok = synthesize_google_tts_ffmpeg(sc["text"], out_mp3)
+
+        dur = get_audio_duration(out_mp3)
+        item = dict(sc)
+        item["audioUrl"] = f"assets/audio/{sc['id']}.mp3"
+        item["durationSec"] = dur
+        manifest.append(item)
+        print(f"  ✅ {sc['id']}.mp3 ({dur:.2f}s, {out_mp3.stat().st_size // 1024} KB) — {sc['stageTitle']}")
+
+    manifest_path = AUDIO_DIR / "narration_manifest.json"
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    total_sec = sum(m["durationSec"] for m in manifest)
+    print(f"🎉 Hoàn tất! Tổng thời lượng thuyết minh: {total_sec:.1f} giây ({total_sec / 60:.1f} phút).")
+
+
+if __name__ == "__main__":
+    main()
