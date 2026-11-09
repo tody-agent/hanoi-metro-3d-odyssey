@@ -922,6 +922,7 @@
       </div>
       <div class="tour-btn-group">
         <button onclick="toggleTourMute()" id="btn-tour-mute" class="t-btn" title="Bật/Tắt giọng đọc Text-to-Speech">🔊 Giọng AI</button>
+        <button onclick="cycleOrbitMode()" id="btn-orbit-mode" class="t-btn" title="Tốc độ xoay camera 3D (Xoay êm dịu / Siêu chậm / Cố định đứng yên)">🕊️ Xoay êm</button>
         <button onclick="cycleTourSpeed()" id="btn-tour-speed" class="t-btn" title="Tốc độ trình bày">1.0x</button>
         <button onclick="stopAutoPresentation()" class="t-btn" style="border-color:rgba(244,63,94,0.45);color:#fda4af;" title="Dừng trình bày tự động">✕ Thoát</button>
       </div>
@@ -1373,6 +1374,7 @@
         paused: false,
         muted: false,
         speed: 1.0,
+        orbitMode: 'gentle', // 'gentle' (~2.5°/s), 'slow' (~1.0°/s), 'freeze' (0°/s)
         sceneIdx: 0,
         sceneElapsed: 0,
         sceneProgress: 0,
@@ -2680,6 +2682,25 @@
       }
     }
 
+    function cycleOrbitMode() {
+      const modes = ['gentle', 'slow', 'freeze'];
+      const curIdx = modes.indexOf(state.tour.orbitMode || 'gentle');
+      state.tour.orbitMode = modes[(curIdx + 1) % modes.length];
+      const btn = document.getElementById('btn-orbit-mode');
+      if (btn) {
+        if (state.tour.orbitMode === 'gentle') {
+          btn.textContent = '🕊️ Xoay êm';
+          btn.title = 'Tốc độ xoay êm dịu (~2.5°/giây, không chóng mặt)';
+        } else if (state.tour.orbitMode === 'slow') {
+          btn.textContent = '🐢 Siêu chậm';
+          btn.title = 'Tốc độ xoay cực chậm (~1°/giây)';
+        } else {
+          btn.textContent = '🛑 Đứng yên';
+          btn.title = 'Cố định camera không xoay';
+        }
+      }
+    }
+
     function easeInOutQuad(t) {
       return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
     }
@@ -2713,6 +2734,7 @@
       renderTourSubtitles(sc, p);
 
       const c = state.cam;
+      const orbitMult = state.tour.orbitMode === 'freeze' ? 0 : (state.tour.orbitMode === 'slow' ? 0.38 : 1.0);
 
       if (sc.phase === 'ORBIT_OVERVIEW') {
         const tr = state.trains[0];
@@ -2721,9 +2743,9 @@
           c.goalTx = -1.5;
           c.goalTy = 1.6;
           c.goalTz = 2.5;
-          c.goalDist = 66 - Math.sin(p * Math.PI) * 8;
-          c.goalPitch = 0.58;
-          c.goalYaw = -0.42 + p * 0.72;
+          c.goalDist = 64; // Steady distance, no oscillation
+          c.goalPitch = 0.54;
+          c.goalYaw = -0.42 + p * 0.28 * orbitMult; // Extremely gentle 16-degree sweep across 42s
         }
       } else if (sc.phase === 'TRAIN_TRANSIT') {
         const trIdx = sc.line === '3' ? 2 : 0;
@@ -2738,9 +2760,9 @@
           c.goalTx = tp.x;
           c.goalTy = tp.y + 1.35;
           c.goalTz = tp.z;
-          c.goalDist = 23;
+          c.goalDist = 24;
           c.goalPitch = 0.42;
-          c.goalYaw += 0.0024;
+          c.goalYaw += 0.00045 * orbitMult; // Calm chase angle
         }
       } else if (sc.phase === 'STATION_STOP_ORBIT') {
         const trIdx = sc.line === '3' ? 2 : 0;
@@ -2763,15 +2785,14 @@
         const centerWz = st ? (st.z * 0.55 + proj.z * 0.45) : proj.z;
 
         if (!isDown) {
-          // Continuous 360° 3D orbital rotation around the stopped station & buildings
-          c.goalYaw += 0.0058;
-          c.goalPitch = 0.49 + Math.sin(p * Math.PI * 2) * 0.05;
-          c.goalDist = sc.orbitDist || 29;
-          const sheetOpen = !document.getElementById('info-sheet')?.classList.contains('closed');
-          const desktopOffset = (window.innerWidth > 820 && sheetOpen) ? 4.8 : 0;
-          c.goalTx = centerWx + desktopOffset * Math.cos(c.yaw);
-          c.goalTy = 2.0;
-          c.goalTz = centerWz + desktopOffset * Math.sin(c.yaw);
+          // Extremely gentle, cinematic drift (~2.5°/sec) - completely free of dizziness or wobble
+          c.goalYaw += 0.00085 * orbitMult;
+          c.goalPitch = 0.44; // Rock-solid steady tilt
+          c.goalDist = sc.orbitDist || 30;
+          // Target point is firmly anchored at the station/project center (NO circular precession)
+          c.goalTx = centerWx;
+          c.goalTy = 1.8;
+          c.goalTz = centerWz;
         }
       } else if (sc.phase === 'SIMULATION_ORBIT') {
         let dm = 750;
@@ -2791,12 +2812,12 @@
 
         const activeProj = state.selectedProject || PROJECTS[0];
         if (!isDown && activeProj) {
-          c.goalYaw += 0.0055;
-          c.goalPitch = 0.48;
+          c.goalYaw += 0.00075 * orbitMult;
+          c.goalPitch = 0.46;
           c.goalDist = 32;
-          c.goalTx = activeProj.sx + 3.2;
-          c.goalTy = 2.2;
-          c.goalTz = activeProj.sz + 1.6;
+          c.goalTx = activeProj.sx + 2.5;
+          c.goalTy = 2.0;
+          c.goalTz = activeProj.sz + 1.2;
         }
       } else if (sc.phase === 'ECONOMETRIC_ORBIT') {
         if (sc.id === 'scene_11') {
@@ -2811,13 +2832,12 @@
 
         const st = state.selectedProject || PROJECTS[0];
         if (!isDown && st) {
-          c.goalYaw += 0.0046;
-          c.goalPitch = 0.50;
+          c.goalYaw += 0.00065 * orbitMult;
+          c.goalPitch = 0.48;
           c.goalDist = 38;
-          const dOff = window.innerWidth > 820 ? 7.5 : 3.0;
-          c.goalTx = st.sx + 4.0 + dOff * Math.cos(c.yaw);
-          c.goalTy = 2.5;
-          c.goalTz = st.sz + 2.0 + dOff * Math.sin(c.yaw);
+          c.goalTx = st.sx + 3.5;
+          c.goalTy = 2.2;
+          c.goalTz = st.sz + 1.8;
         }
       } else if (sc.phase === 'VALUATION_FINALE') {
         const walkInp = document.getElementById('c-walk');
@@ -2829,12 +2849,12 @@
           }
         }
         if (!isDown) {
-          c.goalYaw += 0.0042;
-          c.goalPitch = 0.56;
+          c.goalYaw += 0.00060 * orbitMult;
+          c.goalPitch = 0.52;
           c.goalDist = 56;
-          c.goalTx = 2;
+          c.goalTx = 2.0;
           c.goalTy = 2.0;
-          c.goalTz = 3;
+          c.goalTz = 3.0;
         }
       }
     }
